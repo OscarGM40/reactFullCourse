@@ -1,0 +1,643 @@
+							SECCION 14 Heroes App
+							
+Vamos a trabajar con una SPA, para mejorar en el Routing,ademas vamos  acrear varios estilos.
+Tmb usaremos QueryParams:
+
+						¿Qué veremos en esta sección?
+
+SPA ( Single Page Application ) a profundidad
+
+Diferentes temas en la misma aplicación aplicados a diferentes rutas
+
+Multiples Routers
+
+Push y Replace en el History
+
+Leer argumentos por URL
+
+QueryParams
+
+Aplicar filtros utilizando QueryStrings
+
+En esta sección aún no haremos protección de rutas, pero dejaremos el estilo de esos componentes listos para la siguiente sección.
+
+Aquí quiero enfocarme en la funcionalidad de la aplicación suponiendo que estamos autenticados.					
+
+					PARTE 170 INICIO DEL PROYECTO
+					
+Creamos la aplciacion y le añadimos las imagenes del recurso de Fernando.Dentro de la carpeta public creamos un nuevo directorio, lo llamamos assets y pegamos hay la carpeta heroes.
+Añadimos Bootstrap y el titulo Heroes App.Tmb limpiamos el src dejando solo el index.js.Le pasamos un componente HeroesApp para que no de error.		
+
+				PARTE 171 CREANDO UN PRIMER ROUTER 			
+				
+Pro convencion al archivo con el sistema de rutas principal se le llama AppRouter.js.
+Tip: para que importe los archivos sin que tengamos que tenrlos abiertos podemos crear un archivo tsconfig.jsona la altura del package.json y pegar:
+
+ 1) Tendremos que crear el fichero jsconfig.json en la raiz de nuestro proyecto.
+    2) Por ultimo añadimos este contenido:
+
+    {
+        "compilerOptions": {
+            "target": "es6",
+            "allowSyntheticDefaultImports": true
+        }
+    }				
+	
+				PARTE 172 CREANDO UN SEGUNDO ROUTER
+				
+Queremos que las rutas marvel y dc la navbar tenga un estilo pero cuando estemos en login haya un estilo diferente.
+
+					PARTE 173 History push() o replace				
+					
+Veremos como navegar a traves del sistema de rutas que tenemos implementado en nuestra aplicacion.Si vamos al Component en las ReactDevTools veremos que en sus pros tiene tres objetos: history,location y match.Esto es porque el componente fue envuelto en un BrowserRouter
+Tip:con CTRL+MAYUS+N entro en modo incognito
+Si usamos history.replace("url") hacemos un replace en el historial, y ya no podremos hacer back a esa ruta desde la que hicimos replace
+
+				PARTE 174 Listado de Heroes
+				
+Creamos una carpeta data con los datos que proporciona Fernando.Creamos dos funciones,una que busque por Editorial(publisher) y otra por id.Las importamos en las Pages MarvelScreen y DcScreen.Listamos los datos con un Lista.
+
+				PARTE 175 Tarjetas con el Heroe
+				
+Cambiamos esa <ul> por un componente HeroCard al que le pasamos todo el hero para despues desmenuzarlo:
+return (
+    <div className="card-columns">
+      {
+        heroes.map( hero => (
+          <HeroCard key={ hero.id } {...hero}> 
+        </HeroCard>
+        ))
+      }
+    </div>
+  )
+Despues creamos ese HeroCard y le damos estilo con Bootstrap:
+   <div className="card ms-3" style={{ maxWidth: 540 }}>
+      <div className="row no-gutters">
+        <div className="col-md-4">
+          <img
+            src={`./assets/heroes/heroes/${id}.jpg`}
+            className="card-img"
+            alt={superhero}
+          />
+        </div>
+        <div className="col-md-8">
+          <div className="card-body">
+            <h5 className="card-title">{superhero}</h5>
+            <p className="card-text">{alter_ego}</p>
+            {
+              (alter_ego !== characters) && 
+              <p className="card-text">{ characters }</p>
+            }
+            <p className="card-text">
+              <small className="text-muted">{first_appearance}</small>
+            </p>
+
+            <Link to={`./hero/${ id }`}>Mas...</Link>   
+
+           PARTE 176 Leer Argumentos por URL			
+           
+Esta ruta dinamica ya la habiamos creado antes,pero la habiamos creado mal:
+<Route exact path="/hero/:heroeId" component={HeroScreen} /> Antes habiamos puesto en el path="/heroe" y es la propiedad hero 				 					
+Si queremos extraer parametros por la URL lo mejor es usar el Hook use Params()  que viene de React Router DOM Com hemos llamado a la variable dinamica heroeId podemos desetructurarlo siempre:
+const {heroeId} = useParams() <- siempre va a conincidir la desetructuracion con el nombre de la variable recibida 						
+						
+		PARTE 177 ESTILO DEL componente HeroScreen
+
+Vamos a crear un componente al que iremos al pulsar en 'Mas...'.Recibirá
+el id por la URL asi que hay que usar el hook useParams():
+
+export const HeroScreen = ({history}) => {
+
+  const { heroeId } = useParams(); <- rescatamos el parámetro
+
+  const hero = getHeroById(heroeId);
+
+  if (!hero) {
+
+    return <Redirect to="/" />;
+  }
+
+const handleReturn = () => {const handleReturn = () => {
+    if (history.length <= 2) {
+      history.push("/"); //redireccionamos a la pagina de Marvel si no hay historial
+    } else {
+      history.goBack();
+    }
+  };
+
+  history.goBack(); <- para ir hacia atras usaremos goBack()
+
+Sin embargo,siempre deberia existir el historial, sino nos tirará la 
+aplicacion, asi que miramos si history.length es mayor que 2.
+
+				PARTE 178 useMemo
+
+Fijate que solo deberiamos llamar a las funciones getHeroesByPublisher
+si el publisher cambia(igual con la de el id)Podriamos usar useMemo en el componente que llama a esa funcion.
+Para mnemorizar la funcion usaremos useMemo(()=> funcion,[dependencias]):
+
+  const heroesMemorized = useMemo(() => 
+  getHeroesByPublisher(publisher),[publisher]);  
+
+De igual manera,siempre que sepamos que una funcion solo debe ejecutarse
+cuando cambie esa dependencia la podemos memorizar,asegurandonos
+ que solo se ejecuta si cambia esa dependencia exclusivamente
+
+		PARTE 179 Animaciones en nuestro Componente
+
+Podemos notar que al cmbiar de rutas parpadea un poco.Vamos a agregar 
+alguna animacion con la libreria animate.css (que usa clases css).
+Recordemos que se puede instalar con node.js:
+>>npm install animate.css 
+O simplemente usar su CDN:
+<link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
+  />
+ 
+		PARTE 181 Atrapar un argumento  desde la URL
+
+Vamos a mandar el valor del input como un queryParam:
+   const handleSearch = (event) => {
+      event.preventDefault();
+      history.push(`?q=${ searchText }`);
+   }
+El resultado sera http://localhost:3000/search?q=batman.Lanzarlo es fácil,
+Pero,¿como podemos rescatarlo? Si vamos al componente vemos que en el 
+objeto location esta la propiedad search con ese valor ("?q=batman").
+Podriamos usa esta propiedad pero React tiene un hook llamado 
+useLocation() pero seguimos en las mismas, no hay una manera sencilla de 
+extraer una query(porque podriamos mandar varias,de echo es lo mas normal)
+Asi que vamos a usar un paquete muy conocido llamado query.string.En la 
+documentacion adjunta tenemos en enlace.Se instala con:
+>> npm install query-string 
+USAGE:
+const queryString = require('query-string');
+Despues se le manda el location.search,pero parseado:
+console.log(queryString.parse(location.search))
+Esto nos creara un objeto de claves-valor asi quew nos quedará asi:      
+{
+  q:"batman"
+} esto es porque le llamamos 'q' si hay mas creará mas propiedades 
+
+			SECCION 15 PROTECCION DE RUTAS
+
+En esta sección vamos a centrarnos en proteger las rutas de la 
+aplicación anterior,habrá rutas públicas y rutas por autenticación.
+Va a ser una autenticación hardcodeada,ya lo haremos con un backend.
+		
+			¿Qué veremos en esta sección?
+
+Rutas públicas
+Rutas privadas
+Login y logout - Sin backend aún
+Recordar cuál fue la última ruta visitada para mejorar la experiencia de usuario.
+Context
+Reducer
+
+Esta es una sección pequeña pero importante para trabajar las bases de la 
+autenticación y protección de nuestra aplicación.
+
+			PARTE 187
+Nosotros solo deberiamos mostrar el login si el usuario NO está autenticado
+y tmb deberiamos mostrar la app sólo si SI está autenticado.Para hacer esto
+trabajaremos con Context y crearemos un reducer que no será complicado.
+Por el momento creamos una carpeta auth y otra types
+
+			PARTE 188
+Vamos a crear el Context y un reducer para que el Context distribuya todo 
+ese reducer para que podamos hacer dispatch de acciones en toda nuestra app
+
+import { types } from "../types/types";
+
+//un reducer no es más que una funcion pura
+//crearemos un estado similar a esto
+/* const state = {
+   name: "Elba",
+   logged: true
+} */
+
+export const authReducer = (state = {}, action) => {
+
+   switch (action?.type) {
+    case types.login:
+      return {
+         ...action.payload,
+         logged : true
+      };
+      case types.logout:
+         //si es logout no nos interesa para nada el payload
+         return {
+            logged :false
+         }
+    default:
+      return state;
+  }
+};
+El reducer siempre es la lógica desarrollada de la action.
+Como vemos es una funcion pura muy fácil, más aún apoyandonos en el archivo
+externo types(fijate como crecerá ordenadamente).Es turno ahora de crear el
+contexto.Recordemos que será un HighOrderComponent y el archivo va Capitalizado
+
+import { createContext } from "react";
+
+export const AuthContext = createContext(); <- nada mas en este archivo
+Si bien nos valdria el index.js o el HeroesApp(que es como el App.js) vamos
+a usar el segundo para dejar el index lo mas simple posible:
+
+export const HeroesApp = () => {
+
+  const init = () => {
+    //parseamos a Object la salida del localStorage
+    return JSON.parse(localStorage.getItem('user')) || {
+      //si no hay nada simplemente retornamos logged a false
+      logged:false
+    }
+  }
+
+  const [user, dispatch] = useReducer(authReducer, {}, init);
+
+   return (
+     <AuthContext.Provider value={{ user,dispatch }}>
+       <AppRouter />
+     </AuthContext.Provider>
+   )
+} <- Ya tenemos la habilidad para poder ver ese user (y por ende el logged)
+a lo largo de la aplicacion, ademas de poder despachar acciones.
+Podemos ir a cualquier Componente con las ReactDevTools y en Hooks veremos
+el useReducer con el logged en false
+
+			PARTE 189 Login
+
+En el Componente LoginScreen obtenemos el dispatch a traves del contexto,
+y agregamos un payload:
+
+  //1-Obtener la referencia al contexto mediante el hook useContext(HOC)
+  const context = useContext(AuthContext);
+  //2-Extraemos lo que necesitemos
+  const { dispatch } = context;
+
+   const handleLogin = () => {
+      dispatch({
+        type:types.login,
+        payload:{name:'Fernando'}
+      })
+
+      history.replace("/")
+   }
+Aun asi veremos que cada vez que refrescamos se pierde el valor, debemos 
+fijarlo en el localStorage a traves de un efecto(en el archivo HeroesApp)
+
+ useEffect(() => {
+    localStorage.setItem('user',JSON.stringify(user))
+  }, [user])
+
+			PARTE 190
+En el logout tenemos un problema tal como esta estructurada la APp, y es que
+el objeto history solo viaja entre comnponentes <Route> y nuestra NavBar 
+esta afuera de ellos.Para ello o bien mandamos el objeto history por props
+, lo cual no es muy recomendado, ya que ReactRouterDom ya nos ofrece el hook
+useHistory().Fijate ademas como en realidad al usar un <BrowserRouter> se 
+transformará en un <Router.Provider> proveyendo de este Hook a toda la App
+  
+const { user,dispatch } = useContext(AuthContext);
+    const history = useHistory()
+
+    const handleLogout = () =>  {
+        dispatch({
+            type:types.logout
+        })
+        history.replace("/login")
+    } <-¿Para que mandar props si el hook ya lo va a hacer fácilmente?
+
+		PARTE 191 RUTAS PRIVADAS
+
+Si bien hemos creado la funcionalidad del login y logout aun no hemos 
+protegido ninguna ruta.Para arreglar esto creamos un nuevo functional component
+Tal como tenemos la App cualquier ruta privada pasa por <DashboardRoutes>
+Lo que tenemos que hacer es renderizar el componente de forma condicional,
+recordemos que habia una forma de usar setState(prev => ...) llamando al
+estado anterior, lo mismo haremos con la propiedad component={()=> } del 
+objeto <Route>:
+
+  <PrivateRoute 
+          path="/"
+          component={ DashboardRoutes } 
+          isAuthenticated={user.logged}/>
+
+import React from "react";
+import { Redirect, Route } from "react-router-dom";
+import PropTypes from "prop-types";
+
+export const PrivateRoute = ({
+  isAuthenticated,
+  component: Component,
+  ...rest
+}) => {
+  return (
+    <Route
+      {...rest}
+      component={(props) =>
+        isAuthenticated 
+        ? <Component {...props} /> 
+        : <Redirect to="/login" />
+      }
+    />
+  );
+};
+
+PrivateRoute.propTypes = {
+   isAuthenticated: PropTypes.bool.isRequired,
+   component : PropTypes.func.isRequired
+}
+Tip: cuando estamos en los argumentos el operador es el REST y cuando estamos
+en las PROPS es el SPREAD(cuando las esparce es SPREAD, cuando las junta 
+es REST)
+
+			PARTE 192 RUTAS PUBLICAS
+De forma similar creamos un  componente PublicRoute pero que cheques si no
+está autenticado redirecciona al login y si si lo esta a otra ruta,pues si no entra en bucle(redireccionamos a /Marvel)
+import React from "react";
+import { Redirect, Route } from "react-router-dom";
+import PropTypes from "prop-types";
+
+export const PublicRoute = ({
+  isAuthenticated,
+  component: Component,
+  ...rest
+}) => {
+  return (
+    <Route
+      {...rest}
+      component={(props) =>
+        !isAuthenticated 
+        ? <Component {...props} /> 
+        : <Redirect to="/" />
+      }
+    />
+  );
+};
+
+PublicRoute.propTypes = {
+   isAuthenticated: PropTypes.bool.isRequired,
+   component : PropTypes.func.isRequired
+}
+		PARTE 193 Recordar Ultima Página Visitada
+
+Si miramos por consola el objeto location vemos que en su propiedad pathname 
+tenemos la ruta y en loca�tion.search la query
+
+					PARTE 197 INICIO PRUEBAS en HEROES APP
+					
+Instalamos enzyme , el enzyme del ruso y el enzyme-to-json.Configuramos el setupTest.js
+
+					PARTE 198 Pruebas en el AuthReducer					
+					
+Para probar el metodo reducer lo importamos y probamos sus acciones:
+const state = authReducer({logged:false,{}}
+expect(state).toEqual({logged:false})
+expect(state.logged).toBeFalsy() etc...
+
+const loginAction = {
+type:types.login,
+payload:{name:"Fernando"}} 
+const state2 = authReducer(xxx,loginAction)
+expect(state2).toEqual({logged:true, name:'Fernando'}) <- etc
+
+					PARTE 199 Pruebas en PrivateRoute 					
+					
+IMPORTANTE: Si queremos probar un componente Link o un Route	veremos que nos falla porque deberiamos estar dentro de un Router.
+>>Invariant failed: You should not use <Route> outside a <Router>
+
+Si vamos a la documentacion veremos que React nos proporciona el HOC <MemoryRouter> para que podamos hacer pruebas de Routing.				
+    
+	const wrapper = mount(
+      <MemoryRouter>
+        <PrivateRoute
+          isAuthenticated={ true }
+          component={() => <span>Listo</span>}
+          {...props}
+        />
+      </MemoryRouter>
+    ); <- debe englobar al componente pues es un HOC
+	
+	console.log("===="+wrapper.html()+"====");
+    expect (wrapper.find('span').exists()).toBe(true);
+	
+Si creamos una prueba veremos que falla,esto es porque el shallow no funciona con HOCs,hay que usar el método mount que ya habiamos visto
+
+	PARTE 200 Probar que el localStorage sea llamado con argumentos
+	
+Para simular la llamada de localStorage.setItem debiamos hacerlo de otra forma en los test(con la interface Storage):
+Storage.prototype.setItem = jest.fn() 
+IMPORTANTE: esto lo que hace es convertir la funcionalidad del setItem en una funcion JEST.No es tarea nuestra probar que funciona setItem,SI es tarea nuestra asegurarnos que en la simulacion la funcion sea llamada con los argumentos necesarios.
+
+Una vez que simulemos esa funcion ya podemos acceder a ella:
+
+    expect( localStorage.setItem ).toHaveBeenCalledWith('lastPath','/marvel')	
+	
+	
+  test('Debe de bloquear el componente si no esta autenticado', () => {
+     const wrapper = mount(
+        <MemoryRouter>
+           <PrivateRoute 
+           isAuthenticated={ false }
+           component={() => <span>Listo</span> }
+           {...props}
+           />
+        </MemoryRouter>
+     );
+
+     expect( wrapper.find('span').exists() ).toBeFalsy();
+
+  })
+  
+						PARTE 202 Pruebas en AppRouter
+						
+Fijate en el componente.Tiene una llamada a un Contexto y nos da null si no hacemos nada:
+  const { user } = useContext(AuthContext)
+Cada vez que vea un contexto debo usarlo como HOC en los test:
+   
+   const wrapper = shallow( <- shallow no funcionará
+    <AuthContext.Provider>
+       <AppRouter />);
+    </AuthContext.Provider>
+   );  
+Además,acuerdate que si usamos un HigherOrder Component el shallow no nos va a valer.
+   
+Para probar el segundo test fijate como puedo buscar la navbar de la pagina.Que puta maquina es el pavo este:
+   
+   const wrapper = mount(
+         <AuthContext.Provider value={ contextValue2 }>
+            <AppRouter />
+         </AuthContext.Provider>
+      )
+      expect( wrapper.find('.navbar').exists() ).toBe(true);
+    }) 
+	
+			PARTE 203 Pruebas en el Componente DashRoutes
+			
+De nuevo, fijate como debemos proveer lo que necesite tanto el componente como sus hijos, pues en este caso debemos pasarle un contexto para la NAvbar y MemoryRouter para las rutas.Siempre que se hagan pruebas, hay que fijarse tanto en el componente como en los hijos:
+  
+  test('debe mostrarse correctamente', () => {
+      
+      const wrapper =  mount(
+         <AuthContext.Provider value={contextValue2}>
+         <MemoryRouter>
+            <DashboardRoutes />
+         </MemoryRouter>
+         </AuthContext.Provider>
+      )
+      expect( wrapper ).toMatchSnapshot();
+      expect( wrapper.find('.text-info').text().trim() ).toBe('Fernando'); 
+   })			
+   
+						204 PRUEBAS EN NAVBAR
+						
+Vamos a declarar la instancia wrapper afuera de todos los tests de aqui en adelante.Usaremos mount ya que va a necesitar estar dentro de algun HOC.
+IMPORTANTE:Fijate como cada vez que usemos el hook useContext en las pruebas debemos pasarle un value!No basta con englobar al componente en el HOC:
+
+
+ const contextValue = {
+    dispatch: jest.fn(),
+    user: {
+      logged: true,
+      name: "Fernando",
+    },
+  };
+  
+const wrapper = mount(
+<AuthContext.Provider value ={{contextValue}} <- OJO CON EL VALUE,EsOBLIGATORIO!
+ <MemoryRouter>
+      <Navbar />
+      </MemoryRouter>
+></AuthContext.Provider>) 						
+
+
+  test("Debe de mostrarse correctamente y mostrar el nombre", () => {
+    
+    expect(wrapper).toMatchSnapshot();
+    //Podemos esperar recibir el nombre en el span con esa clase
+    expect(wrapper.find('.text-info').text().trim()).toBe('Fernando')
+     
+  });
+  
+ Hagamos un test mas complicado.Primero que nada podemos mandar un historyMock al Router
+ 
+ Según la documentación de React Router <MemoryRouter> no puede leer y/o escribir en la barra de direcciones, por lo tanto no tiene acceso al método history es por eso que es necesario realizar el Mock al <Router/> para poder simular el método history.
+Como MemoryRouter no permite escribir ni leer de la barra de direcciones, pues esta pensado para simplemente pasar la prueba rápido debemos mockear el Router.
+
+				PRUEBAS 205 TEST DEL COMP HERO SCREEN
+				
+Vemos que el componente recibe un Hero por argumento, y que si no lo recibe  redireccionará a "/".ASi pues, debemos pasarle un Hero.Para ello vamos a usar la prop initialEntries.
+<MemoryRouter initialEntries={['/hero']}				
+Fijate como esta prop recibe un Array de entradas iniciales:
+
+
+   test('Debe de regresar a la pantalla anterior con PUSH', () => {
+      //primero testearemos si el historial es menor a 2
+      const historyMock = {
+         length: 1,
+         goBack: jest.fn(),
+         push: jest.fn(),
+      }
+      //De alguna manera debemos mandarle el Mock
+      const wrapper = mount(
+         <MemoryRouter initialEntries={['/hero/marvel-spider']}>
+            <Route 
+            path="/hero/:heroeId"  
+            component={ (props) => <HeroScreen history={ historyMock }/> }/>
+         </MemoryRouter>
+      )
+         wrapper.find('button').prop('onClick')();
+
+         expect( historyMock.push ).toHaveBeenCalledWith('/marvel')
+         expect( historyMock.goBack ).not.toHaveBeenCalled();
+
+   }) Fijate como not es una propiedad y no una funcion
+   
+						PARTE 207 Pruebas en el LoginScreen
+						
+
+   const historyMock = {
+      push:jest.fn(),
+      replace:jest.fn(),
+      location:{},
+      listen: jest.fn(),
+      createHref: jest.fn(),
+  };
+
+  const contextValue = {
+    dispatch: jest.fn(),
+    payload: {
+      name: "Fernando",
+    },
+  };
+
+  afterEach(() => {
+   jest.clearAllMocks();
+ })
+
+ const wrapper = mount(
+   <AuthContext.Provider value={contextValue}>
+     <MemoryRouter initialEntries={["/login"]}>
+        <Route path="/login"
+            component={ (props) => <LoginScreen history={ historyMock }/>} />
+     </MemoryRouter>
+   </AuthContext.Provider>
+ );
+
+  test("Debe de mostrarse correctamente", () => {
+    expect(wrapper).toMatchSnapshot();
+  });
+
+  test("Debe de realizar el dispatch y la navegacion con replace", () => {
+
+   const HandleClick = wrapper.find('button').prop('onClick');
+
+   HandleClick();
+   expect(historyMock.replace).toHaveBeenCalledTimes(1);
+   expect(historyMock.replace).toHaveBeenCalledWith('/')
+   expect(contextValue.dispatch).toHaveBeenCalledWith({
+      type: types.login,
+      payload:{name:'Oscar'}
+   });
+   
+   localStorage.setItem('lastPath',"/dc");
+   HandleClick();
+   expect(historyMock.replace).toHaveBeenCalledWith('/dc')
+
+
+
+  });
+
+				PARTE  208-209 Pruebas en SearchScreen
+				
+Tip:hicimos un mock del LcalStorage en los test de PrivateRoute y en las pruebas de LoginScreen no lo hicimos.Las ventajas de hacer el mock del localstorag es que puedes saber cuantas vecesha sido llamado,con que argumentos, y reinicar el mock en cada prueba, sin embargo no es obligatorio hacerlo				
+
+Tip:con initialEntries puedo ubicarme en una ruta URL:
+
+  const wrapper = mount(
+      <MemoryRouter initialEntries={['/search']}> <- podria ser otra
+         <Route path="/search"
+         component={SearchScreen} />
+      </MemoryRouter>
+   );
+   expect( wrapper ).toMatchSnapshot();
+   
+ACuerdate que puedo darle un valor por defecto a una desestructuracion:
+const { q = "" } = queryString.parse(location.search); <- el metodo querystring.parse convierte a objeto la queryparam,eliminando los caracteres ? y # (habia que importar el modulo querystring con npm)
+
+Fijate que cuando necesitemos fingir el history ya hay que devolver el 
+componente a traves de una arrow function.
+
+ <Route path="/search"
+      component={ (props) => <SearchScreen history={ historyMock }/> } /> 
+
+Fijate como simulo un cambio en un input:
+wrapper.find('input).simulate('change',{
+target:{
+name:'name del input',
+value:'valor que yo quiera'}})
+Ya puedo evaluar lo que quiera, es ese input pondrá "valor que yo quiera"
+El proposito de usar Route es cuando tenemos que probar algo con la ruta 	  

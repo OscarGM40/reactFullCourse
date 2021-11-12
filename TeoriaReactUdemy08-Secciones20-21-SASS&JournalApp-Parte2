@@ -1,0 +1,20 @@
+			SECCION 20 CRUD EN FIRESTORE Y SUBIDA DE ARCHIVOS
+
+¿Qué veremos en esta sección?
+
+CRUD hacia Firestore
+
+Expandiendo nuestro estore añadiendo otros reducers
+
+Seleccionar y subir archivos
+
+Animaciones adicionales a nuestra aplicación
+
+Limpieza en el logout
+
+Esta sección está enfocada ahora en las entradas de nuestro diario, asegurándose de que grabe únicamente en el documento del usuario autenticado.
+
+		PARTE 254 Continuación del proyecto
+
+Vamos a cambiar el name del usuario hardcodeado en el Sidebar, para ello usaremos un useSelector para que acceda al store:
+ const {name} = useSelector(state => state.auth) <- en el div le mandamos el name(debí cometer algún error)

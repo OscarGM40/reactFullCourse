@@ -1,0 +1,483 @@
+ 						SECCION 1 
+                ¿Como funciona el curso?
+
+El curso debo tomarlo con calma.Es un curso largo.Debo hacer todas las tareas y los tests.No debo competir por terminar el curso rápido
+
+Puedo instalar el plugin ActivitusBar para mandar los iconos abajo.
+Instalar tmb brackects 2
+
+Tip: JSX es Javascript + XML = JSX
+
+						SECCION  2
+ 						Que es React
+React está echo para trabajar con todo tipo de aplicaciones,pequeñas medianas o grandes.Es increiblemente eficiente.Usa programación declarativa.
+Si un cambio impacta en el DOM React sólo actualizará lo mínimo.Los componentes son pequeñas piezas de código encapsuladas.Las aplicaciones se 'rompen' en pequeños componentes.
+También permite Server Side Rendering
+
+Al usr JSX(JS+XML) simplificaron mucho el código,permitiendo escribir HTML en Javascript
+
+Babel va a permitir utilizar codigo de Javascript de ultima generacion. Él se encargará de traducirlo a ECMASCRIPT2015 o al que necesite el navegador,haciendo por ejemplo que 
+const suma=`1 + 1 = ${1 + 1}` se convierta en
+const suma="1 + 1 = " + (1 +1 ) <- este codigo es altamente compatible ,sin embargo el primero no,asi que hay que usar Babel para que él traduzca el codigo a los navegadores
+
+Tip: al realizar una consulta a una API puede que no nos retorne nada.Si  por ejemplo estamos mirando la propiedad  length de undefined nos caerá la aplicacion
+
+console.log(restApi.personajes.lenght) <- si da undefined nos tira la app
+         
+		 OPERADOR DE ENCADENAMIENTO OPCIONAL
+
+Para evitar esto podemos usa el operador ?.,este operador hará que no caiga la app,(aunque devuelve undefined)
+SE le llama OPERADOR DE ENCADENAMIENTO OPCIONAL.
+let arrayItem = arr?.[42]
+
+console.log(restApi.personajes?.length) <- ya no caerá la app!!
+
+React con el JSX elimina la necesidad de Babel,pero si trabajamos en archivos .js si que podemos tener que tener cuidado
+
+                  OPERADOR NULLISH(NULO)
+				  
+El operador nullish coalescing operator (??) es un operador logico que devuelve su parte derecha cuando su operando izquierdo es nulo o undefined, y si no es nulo devuelve esa parte izquierda(pues no es nula).SE puede usar como operador cuando se quiera.
+El operador || e muy similar,solo que devuelve la parte derecha cuando el valor tiende a false(es falsy)			->
+
+const valor = undefined??"es unedfined";
+console.log(valor)
+const valor2 = '' || "es falsy"
+console.log(valor2)
+const valor3 = undefined;
+console.log(valor3?.length??"no hay na aqui")	  
+
+> "es unedfined"
+> "es falsy"
+> "no hay na aqui"
+
+                     SECCION 3 BASICOS DE JAVASCRIPT
+						  
+Podemos saber la version de npx con 
+>> npx --version						  
+Creamos un proyecto React, lo renombramos a 02-intro-javscript y lo abrimos en el VSC. Hacemos limpieza
+
+Tip:en el WebDevTools podemos  ver:
+[HMR] Waiting for update signal from WDS(Webpack  Development Server) si estamos en una aplicacion de React ya que estamos usando Webpack.Webpack toma cada cambio, lo pasa por Babel y actualiza el navegador
+
+         PARTE 13 - VARIABLES Y CONSTANTES
+		 
+Vamos a trabajar con const y let.Siempre debemos leer los warnings y errores de la consola del navegador ->
+
+//valores que no cambian se les debe declarar como constantes 
+const nombre ='Fernando';
+const apellido = "Herrera"
+
+let valorDado = 5;
+//let y const nunca se re-inicializan pues da error
+valorDado = 4;
+console.log(nombre,apellido,valorDado)
+
+if(true){
+   //esta variable es de ambito local
+   let valorDado = 6;
+   console.log(valorDado,"dentro");
+}
+//son ambitos o scopes diferentes
+console.log(valorDado,"afuera");		 
+
+					PARTE 14 - TEMPLATE STRINGS
+					
+Los Template Strings son una manera interesante para concatenar Strings, para interpolar variables o resultados de operaciones.Tmb caracteres multilinea o el nuevo String multilinea:
+
+//const nombreCompleto = nombre + ' ' + apellido;
+//Los template Strings interpretan hasta los espacios y saltos de linea.OJO!
+const nombreCompleto = `
+${nombre}
+${apellido}
+${1+1}
+ `;
+console.log(nombreCompleto);
+
+ function getSaludo(nombre){
+    return 'Hola '+ nombre;
+ }
+
+//las template strings tmb interpretan la ejecucion de funciones
+console.log(`Este es un texto: ${getSaludo('Juan')}`);					
+
+                      PARTE 15-OBJETOS LITERALES
+					  
+Cuando creamos algo en JS tiene un prototype que son sus funciones y métodos.Los objetos trabajan con pares de valores key-value.
+
+const persona = {
+   nombre: 'tony',
+   apellido:'Stark',
+   edad:45,
+};
+
+console.log(persona);
+
+Si hacemos esto veremos en consola:
+>> {nombre:"tony",apellido:"Stark"} sin embargo, no vemos el nombre del objeto, asi que podriamos asignar ese objeto al imprimirlo:
+console.log({
+     persona:persona})	
+>>{persona:{nombre:"tony",apellido:"stark"}} <-puede ser útil.
+Ademas,date cuenta que la key y el value se llaman igual asi que se puede quitar la asignacion:
+>>console.log({persona}) <- mismo resultado
+
+Tip: cuando estamos imprimiendo un objeto(solo un objeto?) podemos cambiar el console.log por un console.table para que imprima de forma tabular el objeto
+
+//NUNCA SE DEBEN COPIAR OBJETOS ASI,POR REFERENCIA,React no acepta este tipo de mutaciones
+const persona2 = persona;
+persona2.nombre='Peter';
+console.table(persona2);
+console.table(persona)  <- lo que duplicamos fue la variable con la misma referencia, no los valores del objeto.Esto es malo.
+
+//SE DEBE USAR EL SPREAD OPERATOR
+//EL SPREAD OPERATOR COPIA EL OBJETO POR VALOR,NO POR REFERENCIA,SIENDO DOS OBJETOS DIFERENTES
+const persona2 = {...persona}
+persona2.nombre='Peter';
+console.table(persona2,"persona2");
+console.table(persona,"persona") 	 
+
+Tip: ojo con objetos con mas de un nivel:
+cuando tienes varios niveles dentro de un objeto
+
+const persona = {
+  name: 'Osner',      // Nivel 1
+  direccion: {        // Nivel 2
+    pais: 'Colombia',
+    ciudad: 'Bogota'
+  }
+};
+el copiado solo lo hace en el nivel 1 y el nivel 2 sigue apuntando al mismo espacio de memorio (direccion). Por lo que si yo hago esto...
+
+const personaCopy = {...persona};
+personaCopy.direccion.pais = 'Venezuela';
+ 
+console.log(persona);
+console.log(personaCopy);
+Toda la modificación que yo haga en el nivel N+1 va a ser la misma para ambos objeto.
+
+para evitar esto yo suelo usar
+
+const personaCopy = JSON.parse(JSON.stringify(persona));
+ola esa opción que pones funciona pero cuando tengas null, undefined, dates, fallará lo mejor es usar una libreria como lodash la cual tiene esta funcion _.cloneDeep(), tambien existe ramda o la libreria rfdc y asi te dejas de preocupar por el tipo de dato que tienes, espero haberte ayudado,
+
+                               PARTE 16 ARREGLOS
+							   
+Un arreglo es una coleccion de informacion dentro de una misma variable.
+Tip: push siempre agrega al final,añadiendo una posicion mas
+No es recomendable que agreguemos con push,porque modifica el objeto principal.Los arreglos son objetos tmb,cuando queramos insertar algo lo vamos a hacer usando el operador spread;
+
+//const arreglo = new Array(100);
+const arreglo = [1,2,3,4];
+/* arreglo.push(1)
+arreglo.push(2)
+arreglo.push(3)
+arreglo.push(4) *///No deberiamos usar push pues modifica el objeto,Se añade con SPREAD
+
+let arregloDos = arreglo;
+arregloDos.push(5)
+
+let arregloDos = [...arreglo,5]; <- debemos añadir por valores
+
+console.log(arreglo);
+console.log(arregloDos);							   
+Veremos que se ha añadido una quinta posicon al arreglo(de indice 4)
+
+Tip: el operador SPREAD lo que hace es extraer la informacion de dentro del objeto,array,... y como estamos creando un nuevo arreglo u objeto este operador manda individualmente cada de los elementos de ese arreglo,y por ultimo le estamos añadiendo el 5.
+
+let arregloDos = [...arreglo,5];
+
+const arregloTres = arregloDos.map(); <- si hacemos esto dará un error, porque el método map espera una funcion en su interior.
+
+Si vamos a la propiedad __proto__ de arregloDos veremos que dice Array.En cuanto pasemos una funcion se quitará el error:
+
+const arregloTres = arregloDos.map(function(numero){
+   return numero*2;
+});
+
+							PARTE 17 FUNCIONES
+							
+No se recomienda crear funciones de esta forma:
+
+function saludar(nombre){
+   return `Hola, ${nombre}`;
+}
+saludar=30;
+
+//console.log(saludar('Goku'))
+console.log(saludar) <- saludar será el numero 30.Es decir podemos reasignar la variable 
+
+Hay que crear las funciones asignandolas a una constante:
+const saludar = function(nombre){
+   return `Hola, ${nombre}`;
+}
+No podremos cambiar saludar ya(pero si codigo)							
+
+Cuando lo que queremos devolver en una arrow function es un objeto hay que usar parentesis para devolver ese objeto de manera implicita:
+const getUser = () => ({
+   uid:'ABC123',
+   username:'El_Papi1502'
+})
+
+					PARTE 18 DESESTRUCTURACION DE OBJETOS
+					
+Es muy tedioso tener que estar escribiendo instancia.propiedad, instancia.propiedad todo el rato.Seria interesante que pudieramos extraer solo las propiedades que nos interesan.
+
+		const persona = {
+   nombre:'Tony',
+   edad:45,
+   clave:'IronMan',
+}
+//PODEMOS desestructurar y reasignar esa propiedad con otro nombre
+const {edad,nombre:nombre2,clave} = persona;
+
+console.log(nombre2)
+console.log(edad)
+
+Algo que es muy usado es usar la desestruracion directamente en el argumento.
+const retornaPersona = ({nombre,edad}) => {
+   //const {edad,clave,nombre} = usuario
+   console.log(edad,nombre);
+}
+Otra carcateristica importante de la desestruracion es que podemos asignar valores por defecto			
+const retornaPersona = ({nombre,edad,rango="Capitan"})
+
+const {nombreClave,años,latlng:{lat,lng}} =retornaPersona(persona);
+console.log(nombreClave,años,"wewe")
+console.log(lat,lng,"lat")
+
+//A esto se le llama desestructuracion anidada de objeto
+
+Estas usando React 17? Si es así, ahora usa Fast Refresh y no Hot Reload, de ahí que funcione diferente.
+
+Prueba a ejecutar la app con npm run start -FAST_REFRESH=true.
+
+Si siguiera sin funcionar, otra solución temporal sería hacer el downgrade a React 16. La solución más sencilla sería descargar el código fuente, borrar los archivos de código y tendríamos un proyecto básico con react 16.
+
+	      PARTE 19 DESESTRUCTURACION DE ARREGLOS
+		  
+Si necesitamos extraer un valor de un arreglo tmb se puede hacer con desestructuracion,solo que tendremos que sar corchetes en vez de llaves,ya que es un Array:
+
+const personas= ['goku','vegeta','trunks']	  
+
+const [elem1] = personas <- igualamos a la instancia de la misma forma
+
+console.log(elem1) <- el nombre no debe coincidir,simplemente va a sacar el elemento en la posicion 1 o indice 0 con el nombre que le demos.
+tip: en vez de usar CTRL+D tmb puedo usar F2 y cambiar todas las ocurrencias(mas rápido)
+
+Como saca en orden si queremos por ejemplo uno en concreto debemos usar esta sintaxis(comas vacias):
+const personajes= ['goku','vegeta','trunks']	
+const [,,calzon]= personajes;
+console.log(calzon,'calzon');
+
+//queremos extraer las letras y numeros de esta funcion
+const retornaArreglo = () => {
+   return ['ABC',123]
+}
+
+const [letras,numeros] = retornaArreglo();
+
+Es mucho mas logico el codigo resultante de desestructurar:
+const usaEstado = (valor)   => {
+   return [valor, ()=>{ console.log('hola mundo')}]
+}
+
+const arr = usaEstado('Fernando');
+console.log(arr);
+arr[1](); //es mucho mas logico desestructurar el array
+
+const [nombre,setNombre] = usaEstado('goku');
+console.log(nombre)
+setNombre();
+
+           PARTE 20 IMPORT-EXPORT y funciones para Arrays
+		   
+Hay varias formas de importar un archivo.Una de ellas es con la palabra reservada import
+import {}	 from './' <- relativePath
+Ademas, habra que exportarlo en ese archivo!
+
+                            FUNCIONES UTILES	   
+							
+Array.prototype.find() 
+
+El método find() devuelve el valor del primer elemento del array que cumple la función callback de prueba proporcionada.							
+const getHeroesById = (id) => {
+   return heroes.find(hero => hero.id === id);
+   }
+   
+Array.prototype.filter   
+El método filter() crea un nuevo array con todos los elementos que cumplan la condición implementada por la función dada.
+
+//el metodo filter se usa caundo queremos todas las coincidencias
+const getHeroesByOwner = (ownerGiven) => heroes.filter(({owner}) => owner === ownerGiven);
+
+     PARTE 21 MULTIPLES IMPORTACIONES Y EXPORTACIONES
+	 
+Por lo general no se recomienda usar las exportaciones por defecto anonimas, ya que no sabemos muy bien qué es ese arreglo,etc(Ojo con es EsLinter para las export default anonimas)
+
+const heroes =[''fdfdfds]	
+export default heroes; <-- asi si se recomienda
+
+Cuando tenemos una exportacion por defecto mas una exportacion individual hay que desestruturar la exportacion inididual:
+
+export const owners = ['DC','Marvel'];
+
+export default heroes; 
+
+import heroes,{owners}  from './data/heroes'; 
+
+Quizas lo mas recomendable sea usar un objeto al exportar(incluso podemos exportar uno por defecto) con 'as default':
+
+export {
+	heroes as default,
+	owners,  <- va perfecto para crecer
+}
+
+                                PARTE 22 PROMESAS
+								
+Las promesas en JS podemos verlas como en la vida real.Podemos prometer algo y luego igual lo cmplimos o igual no.
+Las promesas son asincronas,por lo que primero se va a ejecutar todo el codigo sincrono de la aplicacion y estas promesas caen en un lugar especial de la pila de trabajo o tareas.Hasta que no termine todo lo sincrono no va a ejecutar el lado de las promesas(lo asincrono).
+
+Las promesas se crean con un argumento que es un callback.Este callback recibe dos argumentos, uno llamdo resolve y otro llamado reject(esto es una convencion).
+Resolve es otro callback que se va a ejecutar cuando la promesa es exitosa
+Reject es otro callback que se va a ejecutar cuando la Promise no se pueda cumpli o no sea exitosa.
+
+const promesa =new Promise((resolve,reject)) => {
+  setTimeout(() => {
+      console.log("Me ejecuto al de dos segundos")
+	  resolve()
+   }, 2000);
+});
+
+Si creamos este codigo vamos a necesitar dos o tres metodos importante:
+promesa.then && promesa.catch 
+
+>>promesa.then(() => {
+   console.log("Then de la promesa")
+})
+
+Podemos pasar parámetros a la funcion resolve, e irán al then:
+
+
+const promesa = new Promise((resolve, reject) => {
+   setTimeout(() => {
+      //Tarea importar getHeroeById
+      //console.log("Promesa ejecutada al de dos segundos")
+      const TylerHerro = getHeroesById(2);
+      console.table(TylerHerro)
+      resolve(TylerHerro)
+   }, 2000);
+});
+
+promesa.then((x) => {
+   console.log("Then de la promesa",x)
+})
+
+¿Y si queremos manejar errores?
+
+const getHeroesByIdAsync = (id) => {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      const heroe1 = getHeroesById(id);
+      if(!heroe1){
+         reject("No hay heroe pa ese id")
+      }
+      resolve(heroe1);
+    }, 2000);
+  });
+  //return promesa; <- mejor retornar la funcion de orden superior sin almacenarla
+};
+
+getHeroesByIdAsync(4)
+//.then((x)=> console.table(x))
+.then(console.table)
+//.catch((err) => console.error(err)) <- no hace falta pasarles la referencia
+//algunas funciones van a imprimir el primer argumento que reciban,como warn,log,table o error 
+.catch(console.error)
+Estas funciones son pasadas por referencia,se pasa su referencia, ya se ejecutan ellas
+
+                                       PARTE 23 API FETCH
+									   
+La API Fetch ya viene incluida en el propio navegador:
+Esta es la API KEY de Giphy:
+mSBe4KgXuI2eCZduwNIPriQqbmzIAlX5
+
+Para entrar aun endpoint random usaremos este queryParam:
+http://api.giphy.com/v1/gifs/random?api_key=mSBe4KgXuI2eCZduwNIPriQqbmzIAlX5
+
+//API FETCH
+const apiKey ='mSBe4KgXuI2eCZduwNIPriQqbmzIAlX5';
+
+const peticion = fetch(`http://api.giphy.com/v1/gifs/random?api_key=${apiKey}`);
+
+peticion
+.then(response => response.json())
+.then(({ data })=> {
+    const {url} = data.images.original;
+    console.log(url);
+    const img =document.createElement('img');
+    img.src= url;
+    document.body.append(img);
+})
+.catch(console.warn);
+
+Esta es la base de promesas en cadena y como funciona el fetch api.
+
+Tip: si veo que viene en text/html o que hay problemas con el primer caracter primerodebo mirar a ver si he usado el protocolo http( http://...) ya que si viene en HTML puro y da error.
+
+                           PARTE 24 ASYNC AWAIT									   
+						   
+El AWAit siempre va de la mano del Async, pero el Async si puede ir independiente
+Marcar una funcion con async hará que devuelva su return en una Promesa:
+
+const getImagen = async () => {
+   return 'https://tolytru.com'
+}
+
+getImagen().then(console.log)						  
+							
+El await nos ayuda a nosotros a trabajar todo el código como si fuera síncrono.
+
+
+const getImagen = (async () => {
+  try {
+    const apiKey = "mSBe4KgXuI2eCZduwNIPriQqbmzIAlX5";
+    const respuesta = await fetch(
+      `http://api.giphy.com/v1/gifs/random?api_key=${apiKey}`
+    );
+    const data = await respuesta.json();
+    const { url } = data.data.images.original;
+    const img = document.createElement("img");
+    img.src = url;
+    document.body.append(img);
+  } catch (error) {
+    console.error(error);
+  }
+})()
+
+//getImagen();
+
+Cada vez que Js vea un await va a esperar a que se resuelva(IMPORTANTE!,esto puede hacer la aplicacion mas lenta)Por otro lado, tmb es mas facil de entender el codigo.
+
+                        PARTE 25 OPERADOR CONDICIONAL TERNARIO			
+
+Vamos a ver este operador ternario y su version corta.
+const mensaje = (!activo) ? "activo" : "inactivo";
+
+Bien, habrá veces que solo queremos haga algo si es true,ya que estamos procesando el else o la negacion tmb.Hay una manera interesante de hacer esto:
+
+const mensaje2 = activo && 'Activo'
+El segundo siempre se va a cumplir,ya que tiende a truthy, el primero es el que dictaminara el resultado.
+Esto es muy rápido de procesar por Javascript, asi que debo usarlo.
+Ademas, en una condicion AND, si la primera es falsa no sigue evaluando lo demás,es muy eficaz.
+	
+Tipado. Es la definicion del tipo que tendra una variable dada, por ejemplo si en una variable queremos guardar numero enteros, lo mejor es tener una variable de tipo Int. Ya sea que la definamos nosotros (Tipado estatico) o bien sea definida al vuelo por mismo lenguaje (Tipado dinamico). Pero no solo eso, el dependiendo del tipado que escojamos ganaremos o perderemos algunas caracteristicas. Por ejemplo la forma en que interactuan las variables, la manera de debuguear, la detección de errores, el completado de código la velocidad de implementación y  la velocidad de ejecución, etc. Generalmente aunque no siempre, los lenguaje interpretados usan tipado dinamico, mientras los lenguajes compilados utilizan tipado estatico, esto no es una regla es solo una tendencia.
+
+El tipado estático nos obliga a definir desde el principio el tipo de una variable, ejemplos de lenguajes con tipado estatico son C, C++, Pascal, Java, Objetive-C, C#, entre otros, pero estos son los utilizamos en Qbit. Notese que C# esta incluido aunque exista la palabra clave var, la cual nos permite ahorrarnos un poquito de código, pero una vez que el compilador define el tipo este ya no puede cambiarse.
+
+El tipado dinamico nos da la facilidad de no definir los tipos al declarar una variable, algunos ejemplos son PHP, JavaScript, Grooby, Phyton, Perl, entre otros, estos son los que mas usamos aquí.
+
+Ahora si veamos las diferencias.
+
+Velocidad de ejecución. Cuando la velocidad es un factor importante, lo que nos interesa es que nuestro programa se ejecute rápidamente, sin dudarlo debes escoger un lenguaje tipado estaticamente. Porque la validación de tipos se hará solamente al compilarlo, en cambio los lenguajes tipados dinamicamente hacen la validación en tiempo de ejecución y esta validación es tardada, alentando la tu programa.
+Errores de tipado. Un error de tipado se presenta por ejemplo cuando intentas igualar o comparar dos variables de tipos incompatibles. Cuando programas en un lenguaje con tipado estático, el programa no compilara a menos que los tipos estén correctos, por ejemplo no te permitira comparar un entero contra una cadena, esto te garantiza que cuando por fin corra tu programa, no tendrá problemas de tipado… tendrá otros, pero no de tipado :). En cambio en si el lenguaje tiene tipado dinámico lo terminaras antes, pero debes cuidar no revolver tipos y no te darás cuanta de estos errores hasta que ejecutes el programa y este falle. Es decir esta ventaja se convierte en desventaja si buscas implementar rápidamente. Aunque si tienes un buen IDE te mostrara los errores antes de compilar.
+Conversión de tipos. En los lenguajes estáticos, muchas de las conversiones entre tipos tendrás que hacerlas a mano (cast) y las que no tengas que hacer, te arrojaran Warnings de perdida de datos, obligándote a también hacerlas a mano. Y entre mas fuetemente tipado seran mas y mas conversiones entre tipos deberás hacer. En cambio los lenguajes tipados dinamicamente intentan hacer las conversiones ellos mismo, ahorrándote mucho código.
+Completado de código. Este es un punto que casi nadie toca y que no tiene importancia en proyectos pequeños pero si en los que tienen muchas clases que interactuan entre si. Los lenguajes fuertemente tipados permiten a los IDEs completar código mas ‘atinadamente‘ que los tipados dinamicamente. Por ejemplo si hemos creado una clase llamada Vertebrado, y creamos una variable de tipo Vertebrado e intentamos asignarle el valor de otra clase, el IDE que estamos usando solamente nos sugerirá otras variables que sean del tipo Vertebrado o hereden de este tipo o funciones que retorne un valor de este tipo o de sus herederos. En cambio si el lenguaje es de tipado dinamico, el IDE no puede determinar que variables o funciones son o retornan objetos de tipo Vertebrado y no puede sugerirnos un grupo pequeño de posibilidades. Si no usas un buen IDE y prefieres el bloc de notas o inclusive algún editor que solamente ponga colores al código entonces olvídate de esta ventaja.	

@@ -1,0 +1,594 @@
+										SECCION 4
+										
+								¿Qué veremos en esta sección?
+
+Nuestra primera aplicación en React
+
+1- Exposiciones sobre los componentes
+2- Creación de componentes (Functional Components)
+3- Propiedades - Props
+4- Impresiones en el HTML
+5- PropTypes
+6- DefaultProps
+7- Introducción general a los Hooks
+8- useState
+
+Es una sección importante, especialmente para todos los que están empezando de cero en React, ya que dará las bases de cómo segmentar la lógica de nuestra aplicación en pequeñas piezas más fáciles de mantener.
+
+					¿Que es un componente en React?
+					
+Un componente es una pequeña pieza de código re-utilizable que puede tener estado o no.
+El estado es como se encuentra la informacion del componente en un punto determinado
+
+                     Estructura de un Proyecto					
+							  
+La carpeta node_modules tiene todas las dependencias necesarias para que nuestra aplicacion de React funcione en desarrollo.Ojo,es para desarrollo,esta carpeta luego no se sube al servidor.
+
+El robots.txt es para cuando se despliegue la aplicacion, para los robots de los buscadores o crawlers.
+
+En el index.html hay una especie de variable:
+<link rel="icon" href="%PUBLIC_URL%/favicon.ico"> Esta variable va a apuntar al directorio actual(que es public)
+
+El manifest.json y todo lo de arriba desde él hace referencia a una PWA.Se puede borrar.
+
+En el package.json tenemos private=true, esto es para que el proyecto sea privado y no se despliege en el repositorio mundial de paquetes
+Él usa 16.13.1 y 3.4.1
+
+En cuanto a scripts cuando ejecutemos el build nos preparará la aplicacion para produccion,quitara la informacion de los mensajes de error,optimizará la aplicacion...							  
+
+Si quisieramos crear configuraciones personalizadas,como cambiar que no arranque desde el index.js,cambiar webpack,babel... se hace con el script 'eject',Una vez eyectemos, pasaremos a modo manual y habra que configurar todo manualmente(no se recomienda ejectar sin saber lo que se hace).
+
+Tmb veremos por ahi que viene esLint configurado,lo cual es bueno para la depuracion,mensajes de errores,...
+
+Los archivos de test llevan extension .test.js, esto es importante
+
+import React from 'react' <. react habilita el JSX,ya no hace falta desde la v17.Sin importar React no puedo usar JSX entre otras cosas
+
+import ReactDOM nos permite manipular el DOM del HTML,si no lo importo no puedo hacer renderizaciones en el HTML.
+
+los serviceWorkers son sobre PWA, no son necesarios ahora
+
+Es parte del estandar crear los Componentes en UpperCamelCase
+
+                    Componentes funcionales
+					
+Antes se llamaban stateless functional components, pero desde los Hooks ahora si pueden mantener estado.
+Shortcut: exp + TAB hace un export default
+
+Tip:puedo crear un .env en el directorio principal del proyecto con FAST_REFRESH=true y se autorefresca
+
+Tip: es buena practica que las reglas de css esten ordenadas alfabeticamente:
+html,body {
+   background-color: #21232a;  <- la B primero,etc...
+   color: #fff;
+   font-family:"Helvetica Neue",Helvetica,Arial;
+   font-size: 1.3rem;
+   padding: 70px;
+}					
+
+Nosotros estamos trabajando con Babel,Babel siempre va a barrer el codigo y compilarlo a Js entendible por los browsers.
+Para Babel no es lo mismo esto
+return <h1>Hola mundo fdf</h1>
+que esto:
+return       <- si hay un salto interpreta que hay un punto y coma 
+<h1>Hola mundo fdf</h1>
+
+Ademas, recuerda que estamos en una funcion, y en una funcion de Javascript solo se puede retornar un elemento a la vez,asi que tampoco podemos hacer esto:
+return( 
+<h1>Hola mundo fdf</h1>   <- no se pueden devolver dos cosas
+<p>Mi primera App</p> )
+
+cuando usamos los parentesis en un return indican que todo lo que sigue es un objeto,con lo que es un único elemento devuelto.
+
+                        REACT.FRAGMENT
+						
+Un Fragment es un HOC(un componente que recibe componentes hijos.Podriamos usar <div> ,pero cargariamos al navegador con informacion no necesaria,etc..
+		
+  return (
+    <Fragment>
+      <h1>Hola mundo fdf</h1>
+      <p>Mi primera App</p>
+    </Fragment>
+  );
+
+Sin embargo,hacer esto hará que react importe Fragment y tenemos una forma corta de hacerlo,evitandonos ese import  :
+  return (
+    <Fragment>
+      <h1>Hola mundo fdf</h1>
+      <p>Mi primera App</p>
+    </>
+  );
+
+                            Usar Variables en el HTML
+							
+Para imprimir en el HTML variables deberemos usr expresiones JSX(se usan llaves simples,a diferencia de Angular).Estas expresiones pueden retornar cualquier primitivo,permiten lógica básica en ellas,como ternarios,uppercase,lowercase,sumas,restas,...:
+ 
+ const saludo = 123
+  return (
+    <Fragment>
+      <h1>{saludo}</h1>
+
+Saludo podria ser un decimal,un String, un Array, un Boleano,pero si ponemos un Object dará error.La manera más sencilla de imprimir un objeto al HTML es usar JSON.Stringify(object):
+const PrimeraApp = () => {
+  const saludo = {
+    nombre: 'Fernando',
+    edad:34
+  }
+  return (
+    <Fragment>
+    <pre>{JSON.stringify(saludo,null,3)}</pre>
+Sin embargo, deberemos usar <pre> en vez del <h1> y más argumentos.
+Tip:para seleccionar la etiqueta de apertura y despues la de cierre debo usar CTRL+D.
+NOTA:recuerda que no puedo imprimir objetos en React(da error de React.child cannot be an object)
+
+							PROPS(properties)
+							
+Hay un concepto fundamental en React que son las properties, aunque se usa la abreviatura de props:
+
+const PrimeraApp = (props) => {
+ 
+  return (
+    <>
+      <h1>{props.saludo}</h1>
+
+No es común ver asi las props,hoy en dia se desestructuran las props.
+Tmb hay que tener en cuenta que esa props puede que no fuera enviada, en cuyo caso dara un undefined.
+Si algo regresa undefined no será pintado en el HTML y tirará abajo la aplicación.Puedo controlar esto con el operador '?'.
+
+Hay varias formas de manejar esto, una de ellas es establecer un valor por defecto, otra de ellas es obligar a cualquier desarrollador(o a nosotros mismos) de que tenga que venir un valor en la prop.
+Incluso podemos renombrarlo y darle un valor por defecto a la vez:
+
+const PrimeraApp = ({saludo:salute="moncho"}) => {
+ 
+  return (
+    <>
+      <h1>{salute}</h1>
+
+                          PropTypes						
+								
+Imaginemos que queremos que por fuerza ese saludo sea mandado.Para ello usaremos las PropTypes, pero hay que importarlas.
+Como su nombre indica son los tipos de las properties que deberia recibir el componente:								
+
+import PropTypes from "prop-types";
+
+Despues,antes de exportar el componente abrimos un objeto:
+
+PrimeraApp.propTypes ={
+  saludo : PropTypes.string
+}
+Fijate que la propiedad component.propTypes esta en camel Case.
+cada prop puede ser del tipo que queramos(number,array,boolean,string).
+Si mandaramos ahora un number tendremos un error interesante de tipo failed Prop Type:
+
+ReactDOM.render(<PrimeraApp saludo={123}/>,divRoot)
+
+Si lo queremos como requerido debemos usar la propiedad isRequired(si no la ponemos es opcional esa prop):
+  saludo : PropTypes.string.isRequired
+  bread: PropTypes.any.isRequired <- cualquier tipo,pero requerida
+}
+
+                            DefaultProps
+								
+La manera tradicional de pasar valores por defectos es esta:
+const PrimeraApp = ({saludo,subtitulo='Soy un subtitulo'}) Funciona perfectamente,pero tmb podriamos hacerlo de forma similar a las PropTypes:
+
+PrimeraApp.defaultProps = {
+  subtitulo:'Soy un subtitulo'
+}								
+
+Tip:el snipet rafcp crea un componente con Proptypes.Usalo.Recuerda rafc+ la p
+
+                              Eventos
+										   
+Aqui está la documentación oficial para futuras referencias:
+
+https://es.reactjs.org/docs/events.html
+Podemos empezar simplemente creando el evento onClick e imprimiendo sus caracteristicas:
+
+ <button onClick={function(e) {
+         console.log(e)
+      }}>+1</button>										   
+	  
+React tiene sus propios eventos,usa instancias de SyntheticEvent, un contenedor agnostico al navegador(de forma que los eventos funcionan igual en todos los navegadores).Esto es muy importante asinto.
+
+Estos eventos sinteticos son similares a los de Javascript, incluyendo stopPropagation y preventDefault().
+
+Si por alguna razón necesitara acceder al evento subyacente del navegador se puede hacer con el atributo nativeEvent(aunque puede que no apunte al mismo Evento de JS,ojo)
+
+Nota: A partir de la versión 17, e.persist() no hace nada porque SyntheticEvent ya no se reutiliza.
+
+Tip: el primer argumento siempre va a ser pasado a la funcion,asi que podemos simplemente usar la referencia a ella.
+
+ <button onClick={handleAdd}>+1</button> <--forma facil
+ <button onClick={(e)=> handleAdd(e)}>+1</button>  <- e va a pasar automaticamente
+El argumento event será pasado automaticamente.
+
+Ademas,no debemos ejecutar la funcion.Si mandamos ejecutar la funcion React ejecutara la funcion al renderizar el boton, y lo que queremos es que esa funcion se ejecute en el onClick:
+
+<button onClick={handleAdd}>+1</button>   BIEN
+<button onClick={handleAdd()}>+1</button>   MAL,ademas,dara undefined,pues no existe el objeto Event aun
+NOTA:una función flecha no se autoejecuta al renderizarse el componenteen el que esté definida.  
+
+Normalmente,en los eventos pasaremos referencias a funciones,puede que a veces usemos arrow functions para pasar argumentos.
+
+						PRIMER HOOK -USESTATE
+						
+Un Hook no es mas que una funcion.El hook useState(valor) retornara un array de dos posiciones,las cuales se desetructurarán.Ya lo hicimos en los primeros videos.Al ser un array los argumentos son posicionales,asi que los puedo llamar como quiera:
+
+const useState (valor) => {
+
+return [valor,()=> {console.log('hola' + valor}]
+}						
+const [nombre,setNombre] = useState('goku')
+
+Para nuestra App vamos a usar este estado:
+const [counter,setCounter] = useState(0);
+
+Podriamos pernsar que en el evento onClick podemos pasar una funcion que haga counter++ sin embargo esto reventará el programa, ya que counter es una constante(IMPORTANTE!)
+
+Siempre debemos asignar un nuevo valor con el setter, pues el state de un useState no es mutable en React:
+  
+setCounter(counter + 1) <- he asignado un nuevo valor,pero no he mutado el counter!
+
+no sólo lo tendremos que hacer asi, si no que al hacerlo asi el estado cambiará, y disparará la renderización del componente nuevamente.
+
+No obstante,solo se renderizará la parte que cambie,React es sumamente eficiente para manejar los cambios en el virtualDOM 
+ 
+La funcion setCounter tmb puede ser escrita de otra forma,con una arrow function,ya que el parametro siempre va a ser el estado inmutable:
+setCounter((c)=>c+1)
+
+Tanto React como Angular sólo cambiarán el elemento DOM que cambie de valor.Ambos parecen igual de eficientes al redibujar el DOM.
+
+						SECCION 5 PRUEBAS
+	
+Las pruebas es algo que me pueden pedir y que debo saber.					
+¿Qué veremos en esta sección?
+
+1- Introducción a las pruebas
+2- AAA
+  - Arrange - Arreglar
+  - Act - Actuar
+  - Assert - Afirmar
+3- Primeras pruebas
+4- Jest
+5- Expect
+6- toBe
+7- Enzyme
+8- Comandos útiles en la terminal para pruebas
+9- Revisar elementos renderizados en el componente
+10- Simular eventos
+
+Esta sección de pruebas es sumamente importante porque nos dará la base de las pruebas que estaremos haciendo durante el curso, las pruebas irán creciendo en complejidad, por lo que les recomiendo que nos aseguremos de comprender bien todos estos conceptos para que nos sea más fácil las siguientes secciones de pruebas.En definitiva hay que hacerla XD
+
+                ¿Que son las pruebas,para que sirven...?				
+				
+No son una perdida de tiempo,tal como algunos afirman.Hay dos tipos principales de pruebas,las unitarias y las pruebas de integración.
+
+Los nombres son muy aclaratorios,las pruebas unitarias estan enfocadas en pequeñas funcionalidades(pequeñas partes de la app que hay que probar).Es decir están enfocadas en probar un elemento de forma aislada				
+Las pruebas de integración están enfocadas en cómo reaccionan varias piezas en conjunto.Es decir en probar un elemento de forma agrupada con otros con los que se tenga que relaccionar.
+
+Las pruebas deben ser:
+1- fáciles de escribir
+2- fáciles de leer
+3-  confiables
+4- rápidas 
+5- principalmente serán de tipo unitarias( no tanto de integración)
+
+* Al realizar las pruebas  se aplican ciertos pasos que son conocidos como A-A-A:
+Arrange (arreglar) <- preparar el test
+Act (actuar) <- aplicar estimulo o realizar una accion(click,login)
+Assert (afirmar) <- observar el resultado viendo el resultado de las asserts.
+
+arrange: es el paso en el cual nosotros establecemos el estado inicial(se inicializan variables,se traen las importaciones necesarias)
+
+act: en la parte de actuar aplicamos acciones o estñimulos al sujeto de pruebas(llamar a metodos, simular clicks...
+
+assert: observamos el comportamiento(son los resultados esperados?)
+El AAA se debe aplicar en las pruebas.
+
+Mitos:
+Las pruebas NO hacen que el programa no tenga errores.
+Las pruebas PUEDEN arrojar falsos positivos.
+Las pruebas NO hacen mas lenta la aplicacion(solo estan en desarrollo).
+NO son una perdida de tiempo,solo cuando probamos cosas que no deberian probarse.
+No hay que probar TODO
+Los conceptos son los mismos para cualquier lenguaje
+
+Para no hacer visible la barra lateral "workbench.activityBar.visible": false,
+Importante:las pruebas no formarán parte del bundle final,con lo que su peso será 0Kb.No tienen impacto final en la app.
+
+IMPORTANTE:los conceptos son los mismos para cada lenguaje,entenderlos en React me ayudará a comprender como se testea cualquier aplicación en cualquier lenguaje.
+                          PRIMERA PRUEBA
+
+A la hora de estructurar un proyecto con pruebas lo mejor es crear el folder test y replicar en él la estructura del proyecto(si voy a hacer pruebas en pages/index.js creo el archivo test/pages/index.test.js.
+También hay más formas de estructurar las pruebas.Mientras se haga de forma clara.
+									
+Copiamos la carpeta bases-javascript al proyecto CounterApp y veremos como estructurar el proyecto para las pruebas.
+
+Hay gente que pone el archivo al lado, nosotros haremos otra carpeta,la llamamos tests y creamos un demo.test.js(deberiamos ver el icono de vscode-icons)
+
+El nombre del archivo no es importante(pero si la extension .test.js,sin ella react no sabe que es un test)	
+
+Para ejecutar el test usaremos ReactScripts que esta configurado para usar la libreria Jest,la cual es una libreria muy utilizada para hacer pruebas en React( el comando es npm run test)		
+* Siempre debería haber una prueba al menos,si no dará fallo
+
+Cada uno de los archivos de pruebas es un test suite,cada test en ese archivo si es un test.No es lo mismo test suite que test.
+
+		  VIDEO 51   JEST-Funciones predefinidas ToBe()						
+Enlace a la documentación oficial: https://jestjs.io/
+
+Esta libreria Jest viene con algunas funciones predefinidas que nos ayudarán,como expect(),toBe(),toEqual()...:
+Aqui puedo ver un pequeño resumen:
+Test Suites: 2 failed, 7 passed, 9 total
+Tests:       4 failed, 12 passed, 16 total
+Snapshots:   2 passed, 2 total
+Time:        6.556s
+* Puedo ver que tengo 9 archivos con 16 tests y 2 snapshots
+
+Jest ya me ofrece expect() para comparar(es como un if)
+* expect(a).toBe(b): espera que a y sean el mismo valor(compara tipo y contenido,comparacion estricta)
+//Siempre debe contener al menos una prueba
+
+//Es bueno englobar los test es un describe
+describe('Pruebas en el archivo demo.test.js',()=>{
+   
+   test('deben de ser iguales los strings', () => {
+      //1-Inicializacion Arrange
+      const mensaje ="Hola mundo";
+   
+      //2-Estimulo Act
+      const mensaje2 = `Hola mundo`;
+   
+      //3-Observar y afirmar Assert
+      expect(mensaje).toBe(mensaje2);
+   
+   })
+})
+
+Es importante darle un titulo y una descripcion de la prueba que estamos evaluando.Para esto úlitmo podemos usar el método describe(String desc, callback)					
+
+Tip: hay una extension para pruebas con Jest.
+
+				PARTE 52 Base-02-template-strings
+						
+Recuerda que toBe usa comparación estricta con ===.Dara error al comparara entre 10 y '10'.Tambien dará error al comparar entre dos objetos,aunque tengan las mismas propiedades,pues apuntarán a posiciones en memoria diferentes.Para comparar solo el contenido de esos objetos se usa el operador ToEqual() que solo compara el contenido.
+ 
+Podemos importar para el autocompletado este modulo:
+import '@testing-library/jest-dom';						
+* Es decir que hay que importarlo ya que es imposible recordar las fundiones,asinto.Acuerdate de que trabaje la máquina en vez de tu.
+
+Recuerda usar desc y test y p para filtrar por regexp.Ouyea.-_-
+
+
+						PARTE 53 toEqual()
+						
+No debemos acarrear pruebas que den error porque si no nos podemos confundir.
+Si queremos comparar que dos objetos tengan las mismas propiedades no debemos usar el toBe(),debemos usar toEqual(),toEqual analiza cada una de las propiedades y sus valores,pero no las posiciones en memoria,solo el contenido.
+
+
+			PARTE 55 Pruebas en Archivo 08-import-export
+			
+Tip:el undefined es otro primitivo de javascript,asi que puedo usar expect().toBe(undefined) si lo necesito:
+
+   test('debe de retornar undefined si el heroe no existe', () => {
+      //deberiamos comprobar si existe el id
+      const id = 10;
+      const heroe = getHeroeById(id);
+      //console.log(heroe)
+
+      expect(heroe).toBe(undefined);
+
+   })			
+   
+             PARTE 56 Pruebas con tareas asíncronas
+			 
+Usualmente todas las peticiones son asincronas asi que no se hacen el mismo hilo de tiempo en el cual se ejecuta el codigo,pues el código es sincrono.
+
+Si ejecutamos esta prueba veremos que pasa el test:			 
+ 
+ test("Debe de retornar un heroe async", () => {
+    const id = 1;
+    //retorna una promesa al de 1500 con el heroe o un console.error
+    getHeroeByIdAsync(id).then((heroe) => {
+      expect(true).toBe(false);
+    });
+  } );
+  
+Esto sucede porque el codigo en las pruebas se ejecuta sincrono y esa promesa se resolvia al de 1500ms, asi que da true porque no ha evaluado nada,el test terminó antes.
+
+Usualmente,le podemos pasar un parametro 'done' a la funcion callback.Esto dice a Jest que debe esperar a terminar la prueba.
+
+Ademas, si no hay un expect() nunca terminara y caerá el test al de 5 segundos.Hay que llamar al done al trabajar con funciones asincronas:
+
+  test("Debe de retornar un heroe async", (done) => {
+   getHeroeByIdAsync(id).then((heroe) => {
+      expect(true).toBe(false);
+    done();<- si no se queda esperando
+    });  
+* ahora ya si dará fallo ya que true no es false.
+	
+Hay que llamar al done() siempre que hayamos terminado.Tambien hay otra forma sin el parámetro done.Hay que usar el return y las propiedades resolves o reject.
+
+test('getHeroesByIdAsync debe retornar un héroe async', ()  => {
+    const id = 1;
+    return expect(getHeroeByIdAsync(id)).resolves.toBe(heroes[0]);
+});
+ 
+test('debe de obtener un error si el heroe por id no existe', () => {
+    const id = 10;
+    return expect(getHeroeByIdAsync(id)).rejects.toMatch('No se pudo encontrar el héroe');
+});
+
+          PARTE 57 Pruebas con Async-await y fetch	
+		  
+Tip:en cuanto ponemos a una funcion la keyword async ya devuelve una promesa.
+Como la funcion getImagen devolvia un string tanto si tiene exito coomo si no vamos a crear esta prueba mejor:
+
+   test('debe de retornar el url de la imagen', async ( ) => {
+      //la funcion ya entra hasta adentro
+      const url = await getImagen();
+
+      expect(url.includes('https://')).toBe(true);
+   })		  
+   
+  object.includes("string") se resuelve a un boleano
+  
+Lo mas importante de este video es que puedo poner async y await en mis pruebas,pues lo necesitaré en funciones asincronas
+
+			PARTE 58 Pruebas en Componentes de React
+			
+Para poder hacer tests en componentes tendremos que renderizarlos.Para poder hacer esto usaremos el metodo render(Component) el cual recibe un componente que va a renderizar:
+* Sintaxis del método render: render(<Component />)
+* recuerda que no puedo usar JSX sin importar a React y <Component /> es JSX
+
+import { render } from "@testing-library/react";
+
+En cuanto ejecutemos la prueba veremos un error de React is not defined
+
+   test('Debe de mostrar el mensaje "Hola soy Goku"', () => {
+      const saludo = 'Hola, soy Goku';
+      const { getByText } = render(<PrimeraApp saludo={saludo} />)
+      //wrapper.getByText();
+
+      expect(getByText(saludo)).toBeInTheDocument();
+   })
+Esto es asi porque en cuanto usemos JSX debemos importar React(desde v17ya lo importa por defecto,es un error antigüo)
+Podemos destructurar el objeto wrapper...
+
+	
+Para poder usar la funcion toBeInTheDocument
+ necesitamos configurar a React,esto se hace en el archivo setup.js que en este proyecto hay que crear.Sin embargo en un proyecto creado con create-react-app ya vendrá configurado
+El setup es hijo directo de 'src'.Este archivo,si existe, se ejecutara cada vez que levantemos las pruebas,cargando cualquier configuración que ponga en él antes de las pruebas:
+* En el setup.js importo esta libreria.Amplia funcionalidades al método expect(fijate que es extend-expect)
+
+import '@testing-library/jest-dom/extend-expect';   
+
+Fernando comente que se pueden expandir funcionalidades de varias formas pero Enzyme parece ser una de las mejores opciones.
+Asi que de aqui en adelante trabajaré con Jest+Enzyme para ampliarle la funcionalidad
+
+				PARTE 59 ENZYME TESTING UNIT
+
+Doc: https://enzymejs.github.io/enzyme/				
+LLega un momento en que necesitaré probar botones,probar eventos,acciones,simular eventos,simular librerias de terceros...
+Es aqui donde entra Enzyme.
+
+Enzyme fue desarrollado por la gente de AirBnb, que ahora es mantenida por el mismo equipo de Facebook.En principio no hay soporte para version 17 de React en el Adapter que se necesita.
+
+Las opciones son: o bien se hace downgrade a la 16(es tonteria hacerlo ya que hay un adaptador beta) o si estamos en la 17 usamos el adaptador Beta que deja Fernando en recursos.El import cambia un poco(lleva su nombre @wojtekmaj....)
+
+>npm i --save-dev enzyme enzyme-adapter-react-16 <- para la 16!NO USAR
+
+>npm install --save-dev @wojtekmaj/enzyme-adapter-react-17 <- usar esta
+
+Instalaremos el modulo y el adaptador si estamos en la 16.Si no la beta(y no instalo enzyme?? lo trae el adaptador beta??Confirmarlo.
+EDIT: hay que instalar tambien enzyme pues es el core,asi que siempre va a ser enzyme + el adapter lo que haya que instalar.
+*Fijate que en este proyecto hice downgrade.Comprobar en el siguiente proyecto si hay que instalar enzyme ademas del adaptador beta.
+
+* Una vez instalado todo hay que configurar el setup.js:
+En el setupTests.js debemos importar un par de cosas:
+
+import Enzyme from 'enzyme';
+import Adapter from 'enzyme-adapter-react-16';
+
+Enzyme.configure({adapter:new Adapter});
+
+En los bloques de test usaremos el método shallow() hay que importarlo.Shallow es muy parecido al render.Lógicamente,viene de enzyme.
+Amplia funcionalidades permitiendo ver el componente como un árbol DOM y poder buscar por selectoresId,clases o tags en ese componente o también simular clicks y otros eventos:
+
+import { shallow } frome 'enzyme' <- este método es básico en testing	* La sintaxis de shallow es shallow(<Component />) asi que de nuevo estoy usando JSX.
+
+* Usar enzyme me permite sacar snapshots.Sin embargo necesitaré la libreria enzyme-to-json(las librerias de test siempre van en -D,pues en producción no son necesarias) 
+
+>npm install --save-dev enzyme-to-json
+* Para configurar las snapshots tengo que usar esta linea:
+>expect.addSnapshotSerializer(createSerializer({mode:'deep'}))
+
+Esta libreria nos va a ayudar a trabajar mejor con Enzyme.Parece que es para las snapshots únicamente.
+
+Al final el setupTests.js quedará configurado asi:
+
+import Enzyme from 'enzyme';
+import Adapter from 'enzyme-adapter-react-16';
+import {createSerializer} from 'enzyme-to-json'
+
+Enzyme.configure({adapter:new Adapter});
+expect.addSnapshotSerializer(createSerializer({mode:'deep'}))
+
+La prueba o test quedará asi:
+
+   test('debe de mostrar <Primera App /> correctamente', () => {
+      const saludo = 'Hola, soy Goku';
+      const wrapper = shallow(<PrimeraApp saludo={saludo} />)
+
+      expect(wrapper).toMatchSnapshot();
+   })
+   
+Un SnapShot es una fotografia del componente renderizado.Hacer esto nos da la posibilidad de juntar el poder de Jest junto con el de Enzyme.
+
+		PARTE 60 Revisar elementos HTML dentro del Componente   
+		
+El objeto wrapper de Enzyme nos da acceso a multitud de métodos, entre ellos el método find(String DOMIdentifier ) que es igual que el querySelector, barrerá el árbol DOM en busca de lo que le pasemos:
+
+const textoParrafo = wrapper.find('p').text() <- podriamos acceder a una clase con .clase o un id con #id,etc.Es exactamente igual que Queryelector.Devuelve un array si hay mas de uno.
+ Una vez seleccionado podemos acceder a su contenido con el metodo text() o a su html con html() etc... 	
+
+fijate en la prueba,se esta asegurando que el texto ha pasado por las props:
+
+   test('debe de mostrar el subtitulo enviado por props', () => {
+      const saludo = 'Hola, soy Goku';
+      const subtitulo = 'soy un subtitulo'
+      const wrapper = shallow(
+      <PrimeraApp saludo={saludo} subtitulo={subtitulo}/>);
+      
+      //wrapper.find es muy parecido al queryselector de JS
+      //si hubiera varios regresa un Array, en este caso solo habra 1
+      const textoParrafo = wrapper.find('p').text()
+      //console.log(textoParrafo)
+      expect(textoParrafo).toBe(subtitulo);	
+	  
+el toMatchSnapshot es para validar estructuralmente el HTML de un componente (en el momento en el que se tomó el snapshot). Así, una vez está el componente listo, tomamos ese snapshot, y si en un futuro hacemos un cambio, tenemos la validación en la prueba para asegurarnos si es lo que queremos.
+
+					PARTE 61 Pruebas sobre el CounterApp
+					
+Vamos a crear dos test sobre el componente CounterApp:
+
+test('Debe de mostrar CounterApp correctamente', () => {
+      //shallow crea la snapshot?      
+      const wrapper = shallow(<CounterApp />);
+      expect(wrapper).toMatchSnapshot();
+   })
+
+   test('debe de mostar 100 por defecto', () => {
+      
+      const wrapper = shallow(<CounterApp value={100} />);
+      const valor = wrapper.find('h2').text().trim();
+      expect(valor).toBe('100');
+   })				
+   
+Fijate como el metodo shallow parece crear la snapshot y como el metodo text() devuelve espacios vacios y ademas siempre devuelve un String,podemos parsearlo controladamente también:
+const valor = parseInt(wrapper.find('h2').text().trim());
+* Fijate que esto debería ser un must-do,cortar los espacios vacios,y además en cualquier lenguaje.
+Tip: en Javascript parseInt() no es un metodo estático!
+
+              PARTE 62 Simular eventos-Click   
+						 
+Primero que nada vamos  a usar desde ahora constantes de ambito global, en vez de reasignar lo mismo en cada test,lo hacemos en la cabecera.
+
+Vamos a controlar que incremente en 1 al hacer click, para ello vamos a a necesitar una referencia a los <button>.Podemos usar find() y trabajar en base a su indice con el metodo at() 						 
+
+wrapper.find('button').at(0);
+
+Para simular eventos tenemos el metodo simulate(Event:string,{} Object with options)
+
+Acuerdate que se actualiza la snapshot con 'u' de update.
+
+Tip:puedo observar que las pruebas se realizan en secuencia, asi que si incremento el valor de CounterApp despues debo resetearlo.
+En las pruebas existe algo conocido como ciclo de vida.Para asignar algun valor antes de que cada una de las pruebas se ejecute puedo usar el método beforeEach(()=>{}) en la parte superior, antes de la declaracion de los bloques de test.
+Lo que vamos a  hacer es declarar la variable wrapper en scope global y despues iniciarla cada test:
+
+  let wrapper  = shallow(<CounterApp />);
+   //la funcion beforeEach se ejecuta antes de cada prueba
+   beforeEach(() => {
+      wrapper = shallow(<CounterApp />);
+   })
+al final la hemos tenido que inicializar porque perdemos el autocopletado al estar como undefined;

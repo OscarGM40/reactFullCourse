@@ -1,0 +1,584 @@
+							SECCION 9
+
+Ests secciones son muy importantes para entender aplicaciones mas complejas.Vamos a usar casi todos los hooks existentes
+
+                     ¿Qué veremos en esta sección?
+
+Profundizar en el tema de los Hooks
+
+Crear otros customHooks
+
+useState
+
+useCounter - Personalizado
+
+useEffect y sus precauciones
+
+useRef
+
+useFetch - Personalizado + optimizaciones
+
+useLayoutEffect
+
+Memo
+
+useMemo
+
+useCallback
+
+Estos son los Hooks relativamente simples, aún hay mas que explicaremos más adelante, pero en esta sección nos enfocaremos en estos trabajos y para qué nos pueden servir.
+
+Adicionalmente estaremos dejando las bases para lo que será una sección de pruebas sumamente interesante después.
+
+							Parte 105 useState
+							
+si tenemos un State que sea un objeto como este caso:
+  const [counter, setCounter] = useState({
+      counter1:10,
+      counter2:20,
+   }); si queremos imprimir el valor de counter1 o counter2 podriamos hacer esto:
+ {/* <h1>Counter { counter.counter1 }</h1>   */}
+
+Pero queda feo y confuso asi que podemos desestructurar el state:
+
+ const [{counter1, counter2}, setCounter] = useState({
+      counter1:10,
+      counter2:20,
+   });
+
+Cuando llamamos al setState estamos dando un nuevo estado, todas las propiedades que no asignemos se van a perder.Deberemos usar el operador spread:
+ 
+ setState({
+            ...state,
+            counter1: counter1 +1
+         })    cambiamos el hook si es necesario:
+		  const [state, setState] = useState({
+      counter1:10,
+      counter2:20,
+      counter3:30,
+      counter4:40,
+   });
+
+   const { counter1,counter2 } = state; <- fijate comopodemos desetructurar el state
+  Lo mas importante es que cuando usamos el setState le caeremos encima al antiguo state y lo sobreescribimos por completo
+  
+					PARTE 106 useCounter -CustomHook
+					
+Vamos a crear un customHook que nos ayude con ese counter.Puede ser muy común tener que centralizar la lógica de un useState de una manera mas abstracta para poder reutilizarla.
+Tip: un customHook es una simple funcion(le borramos el HTML a un rafce y ya):
+
+
+const useCounter = (initialState = 10) => {
+  const [state, setState] = useState(initialState);
+
+  const increment = () => {
+    setState(state + 1);
+  };
+
+  const decrement = () => {
+    setState(state - 1);
+  };
+
+  //hay veces que es más fácil devolver un arreglo, otras veces será mejor devolver un objeto
+  return {
+    state,
+    increment,
+    decrement,
+  };
+};
+
+Fijate como hay que devolver las funciones que declaremos en un return.Si queremos devolver un objeto o un array es a nuestro gusto.Fijarse tmb en el nombre que le damos al componente,pues será el nombre del customHook.
+
+				PARTE 107 useEffect SimpleForm			
+				
+El useEffect es unHook que nos va a permitir a nosotros ejecutar algun efecto secundario cuando algo suceda en nuestro componente.
+  
+  useEffect(() => {
+    console.log("hey");
+  },[]);
+
+Acuerdate que e.target devuelve el target del evento(o sea, quien lo lanzó, por ejemplo, si escribimos en un input el target es el input ,obviamente en el evento onChange)Podriamos hacer un console.lod de cualquier propiedad de ese input:
+
+
+const handleInputChange = ({target}) => {
+/*  console.log(e.target.placeholder)
+ console.log(e.target.name)
+ console.log(e.target.value)
+ console.log(e.target.id) */
+
+ setFormState({
+    ...formState,
+    [target.name] : target.value
+ })
+}	 aunque normalemente la mas importante es e.target.value ya que contiene el valor.Ya  que estamos destructuramos un nivel.
+Lo importante de esto es que si escribimos un caracter cambiaremos el estado, asi que el useEffect va a renderizar ese console.log.Tal como lo tenemos isgnifica: no importa lo que cambie, ejecutaté en cada cambio, y esto no es lo que queremos
+							
+Si queremos realizar alguna accion cuando cambie algun estado la gente de React recom,ienda usar un nuevo useEffect con esa dependencia:
+ useEffect(() => {
+   console.log("formState cambió");
+ },[formState]);
+
+Incluso podemos ser mas precisos y sólo ejecutar algo cuando cambie un campo(ya que tenemos un objeto como estado) :
+
+ useEffect(() => {
+   console.log("email cambió");
+ },[formState.email]); <- mejor desestruturar
+Esto es muy útil con comboBox o selectores multiples.De todas formas lo importante es entender que podemos usar el useEffect para estar escuchando cambios en alguna parte especifica de nuestra aplicacion.
+
+Propiedades computadas.Basicamente es asignar el valor de una propiedad ya existente en donde queramos usando corchetes.Se inferirá el valor de dicha propiedad:
+let param = 'size'
+const obj ={
+[param] :12 <- param será sustituido por size
+} 
+de aqui que podemos hacer
+
+[target.name]: target.value Esa propiedad será computada a la propiedad ya existente sin corchetes
+
+				PARTE 108 useEffect unMount-Cleanup
+				
+Si vamos a Components en los ReacDevTools veremos que tendremos los states y los effects en orden como fueron creados.Esto es asi porque React trabaja en base a la posicion en la que fueron creados y no en base a su nombre.Debido a esto no podemos usar Hooks de manera condicional.
+
+Bien,podemos ver que el useEffect regresa una funcion en el return.Es una funcion que se ejcuta como fase de limpieza cuando el componente es desmontado.
+
+
+const Message = () => {
+  useEffect(() => {
+    console.log("Componente montado");
+    return () => {
+      console.log("Componente desmontado");
+    };
+  }, []);
+
+  return (
+    <>
+      <h3>Eres genial</h3>
+    </>
+  );
+
+En el formulario podemos montar y desmontar este componente de forma condicional:
+{(name==='123') && <Message />}  Veremos los ciclos de vida perfectamente.Más adelante vamos a ver un ejercicio mejor
+
+					PARTE 109 useEffect Precauciones
+					
+Esta es una lección corta pero sumamente importante que nos va a ayudar con comportamientos no deseados de los efectos.
+Podemos agregar un evento manualmente cuando monetemos ese componente anterior:
+
+const Message = () => {
+  useEffect(() => {
+    //console.log("Componente montado");
+   window.addEventListener('mousemove', (e) =>{
+      //console.log(e)
+      const coors = { x: e.x , y: e.y };
+      console.log(coors)
+   })
+
+    return () => {
+     console.log("Componente desmontado");
+
+    };
+  }, []);
+Fijate como el evento no se elimina de echo se sigue creando uno más cada vez que se monte el componente.Lo que hay que hacer es crear una referencia a una funcion en vez de usar una funcion anonima y añadirla y removerla por referencia:
+
+ const mouseMove = (e) => {
+       const coors = { x: e.x , y: e.y };
+       console.log(coors)
+       console.log(" :D ");
+    }
+/*    window.addEventListener('mousemove',mouseMove)
+
+return () => {
+window.removeEventListener('mousemove',mouseMove)
+}  
+  
+			PARTE 110 FORMULARIO CON CUSTOM HOOK
+			
+Revisando el formulario podemos observar que no es necesario tener el handleInputChange ni el state en ese componente.Podemos crear un custom Hook.
+const useForm = ( initialState = {}) => {
+
+   const [values, setValues] = useState(initialState);
+
+   const handleInputChange = ({target}) => {
+
+      setValues({
+         ...values,
+         [target.name]:target.value
+      })
+   }
+
+   return [ values, handleInputChange]
+Tip:podriamos retornar como segunda posicion la funcion ahy mismo, sin asignarla  :
+return [ values , ({target}) => {
+
+      setValues({
+         ...values,
+         [target.name]:target.value
+      })
+   } ] <- pero es un poco confuso.Como lo llamaremos con el nombre que queramos funcionará exactamente igual.Se les llama argumentos posicionales, lo unico que importa es que el primero hara referencia a values y el otro a la funcion(porque son un array) 
+Lo más importante de esta práctica es ver el poder que  tienen los customHook para centralizar la lógica y su posterior reusabilidad.   
+					
+					PARTE 111 custom useFetch
+					
+Vamos a crear un customHook que nos permita hacer periciones GET a cualquier URL.Posteriormente podremos personalizarlo aún mas.
+En recursos tenemos la API de BreakingBad,una vez dentro tenemos como empezar en Documentation:
+
+
+export const useFetch = (url) => {
+
+const [state, setState] = useState({
+   data:null,
+   loading:true,
+   error:null})
+
+useEffect(() =>{
+
+   fetch(url)
+   .then(response => response.json())
+   .then(data => setState({
+      loading:false,
+      error:null,
+      data
+   }))
+   
+},[url])
+
+
+return state;
+
+}
+
+
+const MultipleCustomHooks = () => {
+
+         const {loading,data} = useFetch(`https://www.breakingbadapi.com/api/quotes/1`);
+
+         console.log(state)
+
+					PARTE 112 useFetch + useCounter		 
+					
+Fijate como vamos a pasar a boleano un null:
+  const { loading, data } = useFetch(`https://www.breakingbadapi.com/api/quotes/1`);
+  //console.log(state)
+  const { author ,quote } = !!data && data[0]; <-!!data ya es un boleano(si tenemos !!null es un false
+  
+Despues podemos crera un ternario para que muestre un loading o las citas:
+ {
+      loading ? 
+         (
+            <div className="alert alert-info text-center">Loading...</div>
+         ) : 
+         (
+            <blockquote className="blockquote text-right">
+               <p className="mb-0">{quote}</p>
+               <footer className="blockquote-footer">{author}</footer>
+            </blockquote>
+         )
+      }
+	  
+						PARTE 113 useRef PRIMER USO
+						
+El uso básico que se le puede dar a useRef es para mantener una referencia mutable(veremos que es eso de referencia mutable)
+
+  const inputRef = useRef();
+   console.log(ref) <- si imprimos esto veremos un objeto que dice {current:undefined}	.Se refiere al valor actual.
+Lo interesante de useRef es que podemos cambiar a lo que apunta ese ref sin necesidad de disparar una renderizacion nuevamente en la parte de React .Si le asignamos esa referencia anuestro input:
+ <input 
+      ref={inputRef} 
+	  podemos manipular luego caulqueri accion en ese input:
+	  const handleClick = () => {
+   // document.querySelector('input').select();
+   inputRef.current.select();
+}
+Podemos hacer referencia acualquier elemento HTML que tengamos en la aplicacion o darle seguimiento a valores como objetos,numeros o lo que queramos
+
+						PARTE 114 useRef USO REAL
+						
+Vamos a crear una referencia en el custom Hook useFecth:
+const isMounted = useRef(true); <- cuando se monte estara en true,despues cada vez que se desmonte cambiamos la referencia a false:
+  
+  useEffect(() => {
+
+   return () => {
+      isMounted.current =false
+   }
+  },[])						
+  Ahora ya podemos realizar acciones de manera condicional.Vamos a simular una carga lenta y con ello la posibilidad de que el componente haya sido desmontado por el usuario,etc.Si ha sido asi y ejecutamos un cambio de estado caerá la aplicacion:
+    setTimeout(() => {
+           if(isMounted.current){
+        
+            setState({
+                loading: false,
+                error: null,
+                data,
+              });
+
+           }
+        }, 4000) <- de esta forma nunca va a realizar el setState,pues si el componente fue desmontado no lo va a realizar.
+		
+						PARTE 115 useLayoutEffect
+						
+La firma es idéntica a useEffect, pero se dispara de forma síncrona después de todas las mutaciones de DOM(la palabra clave es despues)	Use esto para leer el diseño del DOM y volver a renderizar de forma sincrónica. Las actualizaciones programadas dentro de useLayoutEffect se vaciarán sincrónicamente, antes de que el navegador tenga la oportunidad de pintar.					
+El objetivo de useLayoutEffect es que despues de que se renderice algo yo puedo sacar mediciones de como quedaron divs o diferentes componentes o en sí ejecutar código después de que ya se renderiza todo mi HTML.
+
+Creamos un archivo css con estas reglas:
+body{
+   padding: 70px;
+}
+
+.blockquote {
+   display: flex;
+ } -lo importante es poner el parrafo de la cita en inline,para que el ancho cambie con cada peticion a la API.
+ Referenciamos el parrafo y usamos el efecto sobre la dependencia 'quote'.Si el quote cambia quiere decir que la caja cambió de tamaño
+ 
+ const pTag = useRef()
+
+    useLayoutEffect(() => {
+console.log(pTag.current.getBoundingClientRect())
+
+  }, [quote]);
+  
+Básicamente es para lo que podemos usar useLayoutEffect,para sacar mediciones una vez se haya renderizado el HTML
+Basicamente ambos hooks pueden usarse para lo mismo a excepcion de:
+* useLayoutEffect: si necesita mutar el DOM y / o si necesita realizar mediciones.
+
+* useEffect: si no necesita interactuar con el DOM o sus cambios de DOM no son observables (la mayoría de las veces debe usar esto).  
+
+el useEffect se ejecuta de manera asincrona es decir después de que la pantalla se actualiza visualmente y el useEffectLayout se ejecuta de manera sincrona es decir antes de que la pantalla se actualiza visualmente.
+useLayoutEffect se ejecuta antes de que el navegador pinte el DOM de nuevo,useEffect se ejecuta despues de que lo pinte de nuevo
+
+						PARTE 116 HOC  React.Memo
+						
+Tip: usa rafc.Si React nota un cambio en es estado vuelve a dibujar todo el componente.En nuestro ejemplo solo habia un console.log, pero y si fueran peticiones http?Podemos evitar que un componente se vuelva a renderizar si sus properties no cambiaron(son las mismas) con el HOC React.memo						
+
+				PARTE 117 Hook useMemo
+				
+Vamos a crear un proceso pesado en una carpeta helpers aparte de esta forma:
+
+export const procesoPesado = (iteraciones) => {
+   
+   for (let i = 0; i < iteraciones; i++){
+        console.log('Ahi vamos...')
+     }
+     return `${iteraciones} iteraciones realizadas`
+  }
+  
+Podemos observar que todo cambio dispara ese proceso y no es lo que queremos.Podemos usar el hook useMemo( () => {},[]) para memorizar una funcion y despues ejecutar ese hook en vez de la funcion original:
+
+const memoProcesoPesado = useMemo(() => procesoPesado(counter), [counter])
+
+  return (
+    <>
+    <h1>MemoHook</h1>
+      <h3>
+        Counter: <small>{counter}</small>
+      </h3>
+      <hr />
+
+<p>{ memoProcesoPesado }</p>
+
+Esta funcion ya sólo se ejecutará cuando cambie counter,independientemente de si cambian más cosas.
+
+							PARTE 118 Hook useCallback
+							
+El uso del hook Callback tiene dos casos principales.Uno de ellos es cuando nosotros necesitamos mandar una función a un componente hijo.							
+const increment = () => setCounter(counter + 1)
+
+   return (
+      <>
+         <h1>useCallback Hook: { counter }</h1>
+         <hr />
+
+         <ShowIncrement  increment={increment} />
+      </>
+	  
+Cada vez que cambiemos el estado se generará una nueva función,y por consiguiente cambian las props del componente hijo.Aqui es donde podemos utilizar el useCallback.
+El hook useCallback tomara como primer argumento la lógica de una función que queramos memorizar y como dependencias cuando necesitamos que SI cambie:
+   const increment = useCallback(
+      () => {
+       setCounter(counter + 1)  
+      },
+      [setCounter,counter],
+    ) -fijate que si ponemos esto nos pide las dependencias, pero no arreglamos el problema asi, necesitamos que no esté counter en las dependencias
+	
+	const increment = useCallback(
+      () => {
+       setCounter(c => c + 1)   hay que usar una funcion anonima y no el state directamente
+      },
+      [setCounter],
+   )
+   
+IMPORTANTE: tmb necesitamos por fuerza usar React.memo en el componente hijo!!
+  const increment = useCallback( (num) => {
+       setCounter(c => c + num) ; 
+      },[setCounter] )
+	  
+	 La segunda situaciuon es cuando tenemos un useEffect y como dependencia va una funcion,hay tmb esta recomendado usar useCallbcak
+	 
+						SECCION 10 useReducer
+						
+El useState y el useReducer en teoria hacen lo mismo pero el useReducer es mucho mas utilizado cuando hay muchas más acciones que pueden modificar el state de nuestra aplicacion.Si comprendemos bien este tema entrar a redux será mucho más fácil.
+¿Qué veremos en esta sección?
+
+useReducer
+
+Reducers
+
+Teoría de un reducer
+
+Aplicación de TODOs
+
+CRUD local
+
+Esta es una sección dedicada a comprender el concepto de un Reducer, el cual es sumamente importante para poder entrar a Redux o bien usar el contextAPI fácilmente.
+Mucha gente que viene de React basado en clases, está muy acostumbrado a trabajar con Redux, por lo que les sale cómo trabajar con él y aún más con los hooks de React-Redux.
+
+Los hooks como el useReducer + useContext son una solución que viene incluida en React para no tener la necesidad de librerías de terceros, y honestamente es genial su implementación.
+
+Al final del día todo queda basado en lo que tu necesites en tu proyecto y la magnitud del mismo. Ambas alternativas te ayudarán a resolver tus necesidades.						
+  	  
+					PARTE 123 Concepto de funcion Reducer
+					
+1-Es una funcion comun y corriente(no puede ser asincrona.Los reducer se deben de ejecutar de manera sincrona)
+
+2-Debe de ser una funcion pura(debe de resolver todo internamente sin necesidad de llamar a otras funciones o variables)
+
+3-Debe de retornar siempre un nuevo estado(no mutar el estado)
+
+4-Usualmente solo recibe dos argumentos(el estado inicial y la accion a ejecutar).No debe de llamar el localStorage o sessionStorage dentro del reducer(pues aunque sean sincronas el llamdo puede fallar y devolver  un error con lo que no devolveriamos un nuevo estado)
+
+5-Para modificar el estate NO DEBE REQUERIRSE MAS QUE UNA ACCION(las acciones pueden tener o no argumentos)				
+
+Debemos llamar a la funcion con algo lógico,por ejemplo:
+const todoReducer= (initialState,action)=> {}.Veamos algun ejemplo en código:
+
+const initialTodos = [{
+id:1,
+todo:'Comprar pan',
+done:false
+}]
+
+const todoReducer = (state=initialTodos,accion) => {
+return state
+} <- forma básica de un reducer
+
+Para que hacer todo esto?La idea es tener controladas todas las acciones que modifican el state.Si usamos reducer los cambios de estado solo pueden haber pasado por ellos.
+
+Ciclo de vida de un reducer:Habrá un estado inicial.Al querer interactuar lo que se hace es diseñar una accion(accion de agregar una tarea,eliminarla...) Esa accion es enviada al reducer.El reducer manejara estas acciones, desarrollando la logica y por ultimo devolviendo el nuevo estado.
+Esto es la base de Redux tmb.
+
+						PARTE 124 Crear una ACCION 
+						
+Nunca se usa array.push en React porque muta el array,si queremos añadir algo hay que declarar una Action.Una accion es un simple objeto.Es un estandar que tenga las propiedades type para describir el tipo de accion y payload para los datos  a enviar:
+
+const action {
+ type:'agregar',
+ payload: newTodo
+}						
+
+Esta funcion no puede ser asincrona y debe ser pura, no depender de nada externo.
+
+const todoReducer = ( state=initialState,action ) => {
+
+   switch(action?.type) { <- no hace falta el ?. si no existe ira por el undefined
+      case 'agregar':
+         return [{...state},action.payload];
+      default:
+         return state
+   }
+
+						PARTE 125 HOOK useReducer
+						
+Nosotros podemos pensar en el useReducer como si fuera una alternativa al useState.(useReducer a menudo es preferible a useState cuando se tiene una lógica compleja que involucra múltiples subvalores o cuando el próximo estado depende del anterior)	
+Veamos la sintaxis del Hook:
+
+const [state, dispatch] = useReducer(reducer, initialState, init)				
+
+reducer tiene que ser la funcion reducer ya vista anteriormente
+initialState es un estado inicial
+init es usado como una funcion para inicializar el state
+dispatch me va a ayudar a poder hacer el dispatch o disparar las cciones hacia mi reducer.Es la forma que tiene React de enterarse de los cambios
+
+La funcion reducer puede que se estire bastante,se recomienda usar un archivo externo al componente que usa el Hook
+useReducer es almacenamiento interno en memoria,podriamos guardar un token, pero al cerrar el navegador el token se perderá
+
+				PARTE 127 Dispatch (mandar acciones al reducer)
+				
+Para poder mandar un accion	hay que usar esta funcion.El dispatch es una fucnion la cual le mandamos una ccion y ya va a saber a que reducer le debe mandar dicha accion:
+
+const [todos, dispatch] = useReducer(todoReducer, initialState);
+
+  const handleSubmit = (e) => {
+      e.preventDefault();
+      
+      const newTodo = {
+         id: new Date().getTime(),
+         desc:'Nueva Tarea',
+         done:false
+      }
+      const action = {
+         type:'add',
+         payload:newTodo
+      }
+      dispatch( action );
+			
+Aunque parezcan muchos passos siempre es igual.
+
+				PARTE 128 GUARDAR TODOS EN LOCAL STORAGE			
+				
+Queremos guardar en algun lugar los datos.Vamos a usar el localStorage del browser.El único problema es que en el localStorage sólo se pueden guadar Strings.
+Para poder guardar un objeto debemos usar JSON.Stringify y para recuperarlo debemos parsearlo.Fijate como usa una funcion init  que o bien es un array vacio o lo que haya en el localStorage:
+
+const init = () => {
+  
+  return JSON.parse(localStorage.getItem('todos')) || [];
+
+}
+
+Con un simple efecto agregamos el nuevo arreglo de tareas cada vez que le agreguemos una nueva:
+
+useEffect(() => {
+  localStorage.setItem("todos", JSON.stringify(todos));
+}, [todos])
+
+PAra hacer el delete necesitamos un argumento, esto parece que hace necesario que sea un afuncion flecha:
+ onClick={()=> handleDelete(todo.id)}>Borrar</button>
+
+En este caso, con la función init ayudamos a React a computar el estado inicial, y nos aseguramos que únicamente es llamada una vez, y no cada vez que se renderiza el componente.
+
+En la mayoría de los casos, la diferencia va a ser nula, pero si por ejemplo tu initialState necesita realizar una carga pesada, querrás asegurarte que únicamente se ejecuta una vez, ahí el init es una gran ventaja.
+
+la explicación de este "extraño" comportamiento.
+
+El origen del mismo se encontró en estas líneas y, más concretamente, en el evento onClick:
+
+<button     onClick={ handleDelete (todo.id) }     className="btn btn-outline-danger">     Borrar </button>
+
+Como podéis ver, lo que hago es vincular el evento "onclick" a la  INVOCACIÓN de la función "handleDelete" pasándole el id de la tarea que quiero borrar.
+
+Cada vez que añado una tarea, React renderiza todos los componentes ...BOTÓN incluido. Cuando renderiza este componente, LLAMA a la función "handleDelete" con el id de la tarea recién creada y, claro, la borra. Tras esta acción, se elimina la tarea recién creada (!). 
+
+La solucion es que no puedo llamar a la funcion asi,pues se ejecuta al renderizarse,hay que desvincularla:
+onClick={ () => handleDelete(todo.id) }
+de esta manera, React NO invoca a la función sino que, simplemente, la declara a la espera de invocarla cuando hagamos click en este componente.
+
+						PARTE 130 ToogleTODO
+						
+No hace falta seguir creando mas una accion y mandarla con el dispatch.Podemos mandarla dentro del dispatch como obj:
+ 
+ dispatch({
+    type:'toggle',
+    payload:id
+  }) <- más fácil						
+  
+Vamos a mandar una clase de forma condicional:
+     <p className={`${todo.done && 'complete'}`} Si tenemos esa variable en true tendrá esa clase
+	 
+						PARTE 131 Listado de TODOs
+						
+Acuerdate: el indice nunca lo debemos de utilizar para el key ,React podria confundirse.Mejor usar un id u otra cosa:
+  <ul>
+       {todos.map((
+          (todo,index) => 
+		  <TodoListItem 
+          key={todo.id} <- nunca usar el index,siempre otra cosa
+          indice={index}
+          todo={todo}						

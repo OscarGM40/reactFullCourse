@@ -1,0 +1,736 @@
+					SECCION 17 Journal App y SASS
+					
+Vamos a usar SASS, ya que tiene algunas funciones poderosas.Haremos todo el código nosotros(transciciones,animaciones,...)
+
+					¿Qué veremos en esta sección?
+
+SASS
+
+Diseño completo de la aplicación de forma manual
+
+Uso de funciones de SASS
+
+Configuración y uso de parciales
+
+Transiciones en SASS
+
+Esta sección está totalmente enfocada en aprender a utilizar SASS para crear nuestro estilo de la aplicación, la cual haremos todo nosotros de absoluto cero.					
+
+						PARTE 214 Inicio Proyecto
+						
+Tip:con React 17 ya no funciona Node-Sass 5.0 hay que hacer downgrade de Node-Sass o bien utilizar SASS:
+>>npm install node-sass@4.14.1  <- o este downgrade o  bien npm i sass e instalar sass
+Al parecer compila solo.Para el siguiente usar Sass directamente.
+
+				PARTE 215 IMPLEMENTANDO RUTAS						
+				
+Instalamos el react-router-dom.Vamos a crear una carpeta components y dentro de ella dos subcarpetas: auth y journal.
+Crearemos varios componentes y el sistema de rutas, de form			a muy parecida al proyecto anterior.				
+
+				PARTE 216 IMPLEMENTAR SASS
+
+La ventaja de trabajar con Sass es que vamos a poder dividir el archivo sass en partes( por ejemplo un archivo sólo para los estilos de un botón, 
+de las rutas auth,...)Parte del objetivo de Sass es que sea fácil de leer y de mantener
+Asi pues en el archivo styles.scss sólo vamos a tener las referencias a otros archivos(los partials)
+Creamos una subcarpeta 'base'  y dentro un _settings.scss(con el guión bajo le decimos que es un partials).Dentro declaramos algunos colores:
+// Colors
+$primary:#5C62C5;
+$dark-grey:#363636;
+$light-grey:#d8d8d8;
+
+Ahora debemos importarlo en el archivo main(el styles.scss.)Se importa con @import 'pathRelativo':
+
+@import './base/settings';  <- Sass ignorará el guion bajo y la extensión, pues lo presupone(ojo con el punto y coma de los CSS)
+
+Puedo ver más información en:https://sass-lang.com/guide
+
+Una convencion que se sigue en las clases al usar Sass es usar archivo__clase para saber a que partial ir:
+   <div className="auth__main">  <- la clase main del archivo partial auth 
+Fijate que la clase se llama asi...
+ .auth__main {
+    align-items: center;
+    background-color: $primary; <- podemos usar variables desde cualquier partial con $varName
+    display:flex;
+    justify-content: center;    
+    margin: 0;
+    height: 100vh;
+    width: 100vw;
+ }
+
+
+		218 Estilos del Login
+
+Podemos usar la función darken(color,cantidadAoscurecer) para oscurecer un color ya existente:
+
+ .auth__title {
+   color: darken($color: $primary, $amount: 20);
+ }
+
+El operador & le dice a Sass que coga la misma clase.Ejemplo:
+
+
+ .auth__input{
+    color: $dark-grey;
+    border: 0px;
+    border-bottom: 1px solid $light-grey;
+    font-size: 16px;
+    margin-bottom: 10px;
+    height: 20px;
+    width: 100%;  
+   
+    transition: border-bottom .5s ease; <-queda muy bien con una transición
+
+    &:focus{
+      outline: none;  <- outline quita el borde de la caja de los input.Queda muy bien,
+   }
+ }
+
+Asi como está la funcion darken tmb esta la funcion lighten(color,porcentaje)<- fijate que el segundo valor es el porcentaje!
+.btn-primary {
+   background-color: $primary;
+   border-radius: 2px;
+
+   &:disabled {
+      background-color:lighten($color: $primary, $amount: 15%);
+   }
+}
+
+			PARTE 219 Estilos en el RegisterScreen
+
+Muy parecido al LoginScreen,sólo que un par de cambios:
+.btn-primary {
+   background-color: $primary;
+   border-radius: 2px;
+   
+   &:disabled {
+      transition: .2s ease-in-out;
+      background-color:lighten($color: $primary, $amount: 15%);
+   }
+   
+   &:hover{
+      transition: .2s ease-in-out;
+      background-color: darken($color: $primary, $amount: 10);
+
+   }
+} acuerdate de las variables, de cómo referenciar a la clase actual y de los partials.
+Aparte las llaves son opcionales y se puede anidar.
+
+Tip:a la propiedad transition le debo pasar sobre quién actuar como primer argumento:
+   transition: color .3s ease-in; <- la sintaxis es transition: property time type;
+
+Tip: CTRL + AVPAg se mueve un archivo a la derecha.Con RE es para la izquierda
+
+Tip: en vez de usar una etiqueta img para mostrar una imagen hemos creado un <div> y la mostramos 
+como background, de esta forma tendremos menos problemas
+
+    <div 
+         className="journal__entry-picture"
+         style={{
+            backgroundSize:'cover',
+            backgroundImage:'url(https://picsum.photos/200/300?random=1)'
+         }}
+         >
+
+		PARTE 222 Componente para cuando no haya nada seleccionado
+
+
+Creamos un componente para cuando no haya entradas:
+
+export const NothingSelected = () => {
+   return (
+      <div className="nothing__main-content">
+         <p>
+            Select something
+            <br />
+            pr create an entry!
+         </p>
+         <i className="far fa-star fa-4x mt-5 "></i>
+      </div>
+   )
+}
+
+				PARTE 223 NoteAppBar
+
+Empezamos con la edición de las notas.Fijate como vamos a decir a un textarea que se expanda:
+
+.notes__textarea{
+   border: none;
+   color: $dark-grey;
+   font-size: 20px;
+   flex: 1 1 auto;
+   resize: none;
+}
+
+			SECCION 18 PARTE 228 Explicación del Patrón Redux
+
+
+¿Qué veremos en esta sección?
+
+Redux
+
+Store
+
+Middlewares
+
+Dispatch
+
+Actions
+
+State
+
+Acciones asíncronas
+
+Es una sección sumamente pequeña, pero quiero darles una explicación teórica sobre Redux antes 
+de entrar en él, pero la ventaja es que para estas alturas, ya deberíamos de saber sobre el Reducer, 
+el cual es el corazón del Redux, por consecuencia aprender Redux en este instante debería ser más fácil!
+
+		PARTE 218		REDUX
+
+Redux es un contenedor predecible del estado de nuestra aplicación.Es una forma de controlar donde se encuentra la 
+información de mi aplicación en todo momento.También ayuda a que la modificación de la información sea en una sola
+dirección de manera predecible con el objetivo de predecir cambios accidentales en la aplicación.
+Redux no es propio de React, es independiente al framework o librería(se puede usar en Angular,Vue o Flutter entre 
+otros)
+El store(almácen) en Redux es conocido como la fuente única de la verdad(Single Source of Truth)
+Aqui es donde se encuentra la información que mis componentes van a consumir
+Esto se consigue a través de los reducers, un reducer es una función pura que maneja un estado y acciones.
+Según que accion se maneje se devolverá un nuevo estado u otro (ya que el estado no puede mutar )
+Cada vez que la vista necesite un dato disparará una acción, las acciones son recibidas por los dispatchers
+Los dispatchers van a analizar las acciones, y después la mandará al reducer,el cual sabrá que hacer.
+
+		Redux y acciones asíncronas
+
+Todo esto es sólo para procesos síncronos(nada de peticiones Http)
+En el momento en que la View necesite realizar una acción asíncrona(confirmar un login), 
+llamará al dispatcher, éste desempaqueta o lee la acción y verá que es asíncrona.
+El dispatcher necesitará implementar un middleware si es una acción asíncrona.
+
+Éste middleware recibirá la tarea asíncrona, ejecutará la acción(llamar a la API,esperar por la respuesta...), y cuando 
+tenga todo lo devuelve al dispatcher(ver imagen)<-importante:el middleware está dentro del dispatcher!!
+
+Al final el dispatcher mandará todo al reducer(haya usado la ayuda de un middleware por asíncronia o no)
+Acuerdate tmb que un reducer es un grupo de pequeños reducer(ver la imagen) y que es la vista, al necesitar cosas la 
+que inicia las acciones->dispatcher->reducer->state devuelto-> vista que pide algo de nuevo
+
+			SECCION 19   
+
+Vamos a usar Firestore y Firebase, además de GoogleSignIn.Redux es tán solo un patrón,también se puede usar Context,
+se recomienda usar Redux si la aplicación es muy grande
+
+¿Qué veremos en esta sección?
+
+Redux aplicado en nuestro proyecto
+
+Firebase
+
+FireStore
+
+Redux Devtools
+
+Thunk
+
+Formularios
+
+Google SingIn
+
+Acciones Asíncronas
+
+Mantener el estado de la autenticación
+
+En esta sección configuraremos Redux en nuestro proyecto por primera vez, aplicado al inicio en la parte de la autenticación y mantener el estado 
+de la misma a lo largo de toda la aplicación.
+
+				PARTE 234 Configurando Redux
+
+Redux es agnóstico, así que lo que en realidad usaremos es react-redux:
+>> npm install react-redux
+Esto nos ofrece entre otras cosas hooks para usar Redux en react
+También debo instalar Redux en sí, lo anterior son las utilidades para react:
+>>npm install redux
+Además ocuparemos la extensión de Redux.Empezamos creando un folder llamado 'reducer' y otro para los types:
+   ---Archivo types.js---
+//es mejor no meter las actions.types en duro
+
+export const types = {
+
+   login:'[Auth] Login',  
+   logout:'[Auth] Logout',  
+
+}
+El reducer para la auth es algo sencillo:
+
+//reducer para la auth
+export const authReducer = (state, action) => {
+  switch (action.type) {
+     //login simplemente asigna un usuario nuevo
+    case types.login:
+      return {
+        uid: action.payload.uid,
+        name: action.payload.displayName,
+      };
+      //logout restablece el user a un objeto vacío
+    case types.logout:
+      return { };
+
+    default:
+      return state;
+  }
+};
+Ahora debemos crear la fuente de la verdad, la crearemos en la subcarpeta 'store' en el archivo store.js
+Deberemos de importar de 'redux' :
+
+
+CreateSore sólo puede recibir un reducer nada más, asi que se suelen combinar antes con combineReducers({})
+import { createStore,combineReducers } from 'redux';
+import { authReducer } from '../reducers/authReducer';
+
+//el objeto del argumento de combineReducers será la estructura del 
+// store,es un lugar para combinar reducers(aunque tenemos uno solo)
+const reducers = combineReducers({ <- como argumento un objeto
+   auth:authReducer
+});
+
+export const store = createStore(reducers); <- store será una prop para el HOC Provider
+
+Elejimos JournalApp como componente.Debemos importar el HOC Provider desde react-redux y 
+pasarle el store(fijate en la similitud con la prop value):
+
+import { Provider } from 'react-redux';
+import { store } from './store/store';
+
+export const JournalApp = () => {
+   return (
+     <Provider store={ store}>
+       <AppRouter />
+     </Provider>
+   )
+}
+
+			PARTE 233 Configurar ReduxTools
+
+Para configurar las ReduxTools podemos pinchar en el enlace del browser y nos faltará añadir una línea:
+
+ const store = createStore(
+   reducer, /* preloadedState, */
++  window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()  <- esta línea
+ );
+Va como segundo argumento
+
+Dentro de estas tools podemos ver cosas tan interesantes como a que hora se creó el store a través de la función @@init.
+La mayoría de estas opciones son sólo para modo desarrollo.
+
+			Parte 234 Primer Dispatch
+
+Nos traemos nuestro Hook useForm de GitHub, recordemos que recibe un initialState y devuelve un array de 3 args posicionales
+En cuanto tenemos los values en el submit debemos llamar al dispatcher, tmb debemos definir la acción:
+--- Creamos un archivo en el que desarrollamos cada accion---
+import { types } from "../../types/types"
+
+export const login= (uid,displayName) => ({   
+      type:types.login,
+      payload: {
+         uid,
+         displayName
+      }
+   })
+
+Para poder mandar esta accion react-redux definió el hook useDispatch.Lo importamos:
+import { useDispatch } from "react-redux";
+
+ 
+En la zona de declaraciones llamamos al hook para poder hacer dispatch
+  //este hook sirve para acceder al dispatch
+  const dispatch = useDispatch();
+
+Simplemente despachamos la accion.Fijate como podiamos haber declarado la accion dentro del dispatch:
+
+ const handleLogin = (e) => {
+    e.preventDefault();
+    // console.log(email, password);
+    dispatch(login('123','Juan'));  <-login es la funcion del archivo con las actions
+  };
+
+Importante:Redux va buscando en los reducers de manera implícita por el que concuerde con el nombre de la acción.
+Por eso no referenciamos a authReducer y Redux ya sabe que es él.
+
+			PARTE 235 Firebase y Firestore
+
+Es momento de usar un backend.Vamos a usar Firebase que ya tiene todo montado,nos da autenticación, nos da hosting,
+nos da base de datos y tiene una tier gratuita que nos va a dejar trabajar simplemente con tener una cuenta de google
+Tip:Fernando deja un enlace a una playlist suya de Firebase:https://www.youtube.com/playlist?list=PLCKuOXG0bPi29EkcAuVCln9ISbExcQk66
+
+Cuando me registre creo un nuevo proyecto(le llamé react-app-curso-udemy),desactivo si quiero GoogleAnalytics y continuar
+Lo primero vamos a gestionar la autenticación con Google,vamos a compilación/autenticación/sign-in methods y alli veremos
+varios métodos para autenticarse(puedo habilitar los que quiera{aparecerán todos inhabilitados}) 
+Habilitamos correo y contraseña y guardamos,hacemos lo mismo con google-sign(pide un correo para incidencias)
+Por último vamos al proyecto e instalamos el manejador para Firebase:
+>>npm i firebase <- si da problemas usar --save
+
+			PARTE 236 Thunk Middleware
+
+Thunk es un middleware encargado de ejecutar peticiones Http asincronamente.Es muy ligero y muy utilizado:
+>>npm i --save redux-thunk
+Falta configurar todo:
+import thunk from 'redux-thunk'; <-ojo es redux
+
+Para no romper nada de lo que tenemos hay que hacer un par de cosas:
+const composeEnhancers =(typeof window !== 'undefined' && window.__REDUX_DEVTOOLS_EXTENSION__COMPOSE__) || compose;
+
+export const store = createStore(
+   reducers,
+   composeEnhancers(applyMiddleware(thunk))
+   );
+  
+Tip:hay que importar el appyMiddeware(thunk) desde React.
+Realizar esto nos va a permitir crear acciones asincronas.Creemos la primera:
+//es solo otra accion más,solo que devuelve una arrow fucntion con el codigo
+export const startLoginEmailPassword = (email,password) => {
+   //esta funcion va a regresar un callback
+   return (dispatch) => {
+      setTimeout(() =>{
+         dispatch( login(123,"Pedro") );
+      },3500)
+   }
+}
+
+Cuando queramos llamarla lo hacemos de esta forma:
+
+  const handleLogin = (e) => {
+    e.preventDefault();
+    dispatch( startLoginEmailPassword(email,password) );
+  };
+
+No hicimos más que disparar una acción al de 3.5s cuando se dispare el dispatch
+Como llamamos a la accion siempre desde un dispatch tenemos acceso a él:
+  dispatch( startLoginEmailPassword(email,password) ); <- el middleware tiene acceso al dispatch
+el retorno de este tipo de funciones seria el dispatch en si mismo(el valor de retorno), :
+Así lo explica en su documentación:
+"Cualquier valor de retorno de la función interna estará disponible como el valor de retorno de dispatch sí mismo. Esto es conveniente para orquestar 
+un flujo de control asincrónico con creadores de acción thunk que se envían entre sí y devuelven Promesas para esperar la finalización de cada uno"
+asi que podria usar function= () => {return(dispatch)=> { dipatch(action) }} <- y llamar a otra accion que el middleware esperará
+
+			PARTE 237 Configurar Firebase y Google-Signin
+
+Cuando el usuario pulse el botón queremos que se autentique con Firebase.Hay que buscar el icono </>(pone web) esta en  la ruedecita entre otros
+lados.Registramos la aplicación y se nos desplegará la configuración a pegar en nuestra aplicación de frontend.
+Los datos que se muestran son públicos.De nuevo,creamos un subfolder y un archivo para la config:
+----En el archivo deseado
+import firebase from 'firebase/app';
+import 'firebase/firestore';
+import 'firebase/auth';
+
+const firebaseConfig = {
+   apiKey: "AIzaSyB5_CDDUTPypF4tbOjpL5pHi9xAuSj1yFY",
+   authDomain: "react-app-curso-udemy-e97fe.firebaseapp.com",
+   projectId: "react-app-curso-udemy-e97fe",
+   storageBucket: "react-app-curso-udemy-e97fe.appspot.com",
+   messagingSenderId: "380562023366",
+   appId: "1:380562023366:web:da82a64312eac8a1c3c8c7"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+
+const db = firebase.firestore(); 
+const googleAuthProvider = new firebase.auth.GoogleAuthProvider();
+
+export {
+   db,
+   googleAuthProvider,
+   firebase
+} <- exportamos incluso el módulo por si lo necesitamos
+
+Debemos crear una accion para el login por Google:
+ export const startGoogleLogin = () => {
+    //el thunk/middleware me va a proveer el dispatch
+    return ( dispatch ) => { 
+    //singInWithPopup pide un proveedor y es una promesa   
+      firebase.auth().signInWithPopup(googleAuthProvider)
+    // resuelve a un UserCredential 
+      .then( userCred => { 
+         console.log(userCred )
+      })  
+    }
+ } 
+El botón en el onClick deberá llamar a esta función:
+ const handleGoogleLogin = () => {
+    dispatch( startGoogleLogin() );
+  }
+Veremos que Google proporcionará varias propiedades como mi username o un uid único(del UserCredential que devuelve la promesa)
+Sólo hay que extraerlas:
+ 
+export const startGoogleLogin = () => {
+    //el thunk/middleware me va a proveer el dispatch
+    return ( dispatch ) => { 
+    //singInWithPopup pide un proveedor y es una promesa   
+      firebase.auth().signInWithPopup(googleAuthProvider)
+    // la función resuelve a un UserCredential 
+      .then( userCred => { 
+         const { user } = userCred;    DESESTRUCTURAMOS Y LANZAMOS EL DISPATCH
+         dispatch(login(user.uid,user.displayName))
+      })  
+    }
+ }
+
+Si voy a Firebase veré que hay un nuevo registro(salen todos los login)
+
+			PARTE 238 Registro de usuarios
+
+Traemos el hook al RegisterScreen e implementamos los values,onChange,onSubmit,etc...
+
+			PARTE 239 Validación del Formulario
+
+El paquete está aqui:https://www.npmjs.com/package/validator
+Vamos a usar el paquete validator, es un paquete bastante utilizado para validaciones:
+>>npm i validator
+Viene con muchas funciones validadoras como isEmail(),isAlpha(),etc...
+
+import validator from 'validator';
+
+else if (validator.isEmail(email)) {
+      console.log("Email is not valid");
+      return false;
+Usarlo no tiene nada
+
+		PARTE 240 UiReducer y acciones en el RegisterForm
+
+En algunos lugares el combineReducers se suele escribir como rootReducers:
+
+const reducers = combineReducers({ 
+   auth:authReducer,
+   ui: uiReducer,
+});
+
+Creamos las acciones ahora:
+import { types } from "../../types/types"
+
+export const setError = ( msgError )=> ({
+   type: types.uiSetError,
+   payload: msgError
+})
+
+export const removeError = (  ) => ({
+   type: types.uiRemoveError
+})
+La ventaja de Redux sobre Context es que en Context hay que rastrear para saber que cosa cambia el Store
+
+		PARTE 241 useSelector traer información del State
+
+El hook useSelector viene de Redux, asi que lo tenemos disponible pues hemos instalado Redux
+El useSelector va a disparar un callback en el cual tengo mi state.Básicamente es la forma que tengo de acceder a el estado:
+
+ const { ui:{ msgError }} = useSelector( state => state )
+Ya tengo acceso a los mensajes de error
+
+		PARTE 242 Registro desde la App(no con Google)
+
+Para registrar a un usuario en Firebae vamos a definir la siguiente acción:
+export const startRegisterWithEmailPasswordName = (email, password, name) => {
+  return (dispatch) => {
+    firebase
+      .auth()
+      .createUserWithEmailAndPassword(email, password)
+      .then( async (userCred) => {
+        const { user } = userCred;
+        // es muy conveniente acceder a este método y subir el nombre también 
+        await user.updateProfile( { displayName:  name } )
+        // console.log(user)
+        dispatch(login(user.id,user.displayName))
+      })
+      .catch( e => console.log(e))
+      ; 
+  };
+};
+
+Si usamos la autenticación de Firebase sólo vamos a poder guardar usuarios con los campos email, password y añadir el displayName después, 
+si queremos más campos habría que añadirlos a posteriori
+Tip: se puede usar autenticación por roles(https://www.toptal.com/firebase/role-based-firebase-authentication)
+
+
+			PARTE 244 Tarea 
+
+Fijate como hay que adivinar que hay que crear las acciones porque el puto enano piensa que lo vamos a adivinar:
+
+export const startLoading = ( ) => ({
+   type: types.uiStartLoading,
+})
+
+export const finishLoading = ( ) => ({
+   type: types.uiFinishLoading,
+})
+Las acciones no llevan lógica,esto se hace en el reducer:
+ case types.uiStartLoading:
+      return {
+        ...state,
+        loading: true,
+      };
+    case types.uiFinishLoading:
+      return {
+        ...state,
+        loading: false,
+      };
+Obviamente las pasamos al reducer,y ya podemos llamarlas
+es solo otra accion más,solo que devuelve una arrow fucntion con el codigo
+
+export const startLoginEmailPassword = ( email, password ) => {
+  return (dispatch) => {
+    dispatch( startLoading() )
+      
+    firebase
+      .auth()
+      .signInWithEmailAndPassword( email, password)
+      .then( ({ user }) => {
+        dispatch( login( user.id, user.displayName) );
+        dispatch( finishLoading())
+      })
+      .catch(e => {
+        console.log(e);
+        dispatch( finishLoading())
+      });    
+  };
+};
+
+Sacamos el loading del useSelector y ya podemos renderizar el disabled condicionalmente:
+  const { ui:{ msgError,loading }} = useSelector( state => state )
+
+Este ui viene de aqui,de los reducers del store:
+
+const reducers = combineReducers({
+   auth:authReducer,
+   ui: uiReducer,
+});
+Seguir buscando el error
+
+		PARTE 245 MANTENER EL ESTADO DE LA APP AL RECARGAR
+
+
+Recordemos que cuando creamos un usuario automáticamente lo autentica en Firebase y lo guarda, pero por el momento vamos a hacer que al recargar 
+no perdamos el estado:
+  useEffect(()=>{
+    firebase.auth().onAuthStateChanged(user=>{
+	if (user?.uid){
+	   dispatch( login(user.uid, user.displayName ) )
+}	
+})
+  },[])
+
+El método firebase.auth().onAuthStateChanged() creará un objeto Observable.Un Observable es un tipo de objeto especial que se puede disparar más de
+una vez(cuando la autenticación cambia se va a disparar,cuando el usuario se logea se vuelve a disparar, etc...)
+Al dispararse ejecutará el codigo del callback
+Es un concepto relacionado con los Subscribers.
+Podriamos hacer Unsubscribe de nuestro Observable en la zona de clean up del efecto
+
+Fijate en el uso del operador de encadenamiento opcional, que permite leer el valor de una propiedade dentro de una cadena de objetos sin tener
+que expresar que cada referencia en la cadena sea válida(ya lo hace el operador parando si no es válida)
+En métodos también se puede usar:
+      saludo.saludar();
+      saludo.gritar?.(); <- si no existe gritar ya no cae el programa
+Si pongo esto no caerá el programa mientras que si no lo pongo si cae??
+   saludo.jota?.apellido
+
+if (user?.uid) <- si el objeto user tiene algo entonces pregunta por el id.Si no existe hará cortocircuito y se sale
+Le pusimos un array vacio porque es un Observable y solo con una vez ya nos quedamos suscritos
+
+			PARTE 246 Mostrar loading global
+
+Queremos que el usuario vaya a una ruta u otra segun esté autenticado o no,pero necesitamos esperar al efecto
+  //Necesitamos esperar a que el efecto tenga la respuesta
+  const [ checking, setChecking ] = useState(true);
+  const [ isLoggedIn, setIsLoggedIn  ] = useState(false);
+
+  useEffect(()=>{
+    //user será null si no estamos autenticados
+    firebase.auth().onAuthStateChanged( user => {
+      if ( user?.uid ) {
+        dispatch( login( user.uid, user.displayName ) );
+        setIsLoggedIn( true )
+      } else {
+        setIsLoggedIn( false )        
+      }
+      setChecking(false)
+    })
+  },[ dispatch,setChecking ])
+
+  if ( checking ) {
+    return (<h1>Espere...</h1>)
+  }
+
+			PARTE 247 Logout
+
+Vamos a implementar la lógica del logout,deberá cerrar sesión en Firebase.Para ello habrá que crear alguna acción nueva:
+export const Sidebar = () => {
+  const dispatch = useDispatch();
+
+  const handleLogout = () => {
+    dispatch(logout());
+  }
+En el botón llamamos en el onClick a esta función.Veamos las acciones:
+//debe ser asincrona porque el método signOut() regresa una promesa
+export const startLogout = () => {
+  //tenemos el dispatch porque lo ofrece thunk
+  return async ( dispatch ) => {
+    //todo lo que tenga que ver con autenticación esta en auth()
+    await firebase.auth().signOut();
+    dispatch( logout() )
+  }
+}
+
+export const logout = () => ({
+  type: types.logout  
+})
+
+Es bastante sencillo hacer el logout.Aún nos quedaría hacer la redirección al deslogearse.
+Tip:Redux automáticamente busca en todos los stores por las actions,es decir, busca en todos asinto
+
+		PARTE 248 Protección de rutas
+
+Si isLogged in está en true entonces puedo ver la pàgina de journalScreen que sería el slash, y si no lo está hay que sacarlo al 
+LoginScreen.Vamos a implementar estas rutas publicas y privadas con la misma lógica de la app anterior de los héroes:
+  <Switch>
+        <PublicRoute path="/auth" component={ AuthRouter }
+        isAuthenticated= { isLoggedIn } />
+
+        <PrivateRoute exact path="/" component={ JournalScreen }
+        isAuthenticated= { isLoggedIn } />
+
+     {   <Redirect to="/auth/login" />}
+
+ </Switch>
+
+Traer estos componentes de otro proyecto:
+
+import React from 'react';
+import { Redirect ,Route } from 'react-router-dom';
+
+export const PrivateRoute = ({
+      isAuthenticated,
+   component:Component,
+   ...rest
+}) => {
+
+ 
+   return (
+      <Route
+      {...rest}
+      component={ (props) => 
+            ( isAuthenticated )
+         ? <Component {...props} />
+         : <Redirect to="/auth/login" />
+      }
+      />
+   );
+};
+
+Y cambiar las redirecciones,siempre debería haber un boleano para el loggedIn
+
+		PARTE 249 Mensajes de error con Sweet alert2
+
+Si ingresamos errores en los formularios sólo nos lo muestra por consóla,vamos a usar la libreria sweet alert 2 para arreglar esto:
+https://sweetalert2.github.io/ <- instalar con npm i sweetalert2
+En el archivo con la lógica
+import Swal from 'sweetalert2';
+
+  .catch( e => {
+        console.log(e);
+        Swal.fire("Error",e.message,'error')
+      })
+Usamos la funcion en los errores,lleva tres argumentos:título,cuerpo y tipo

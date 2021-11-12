@@ -1,0 +1,35 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Pruebas en componente GifGrid Debe de hacer match con el snapshot 1`] = `
+<Fragment>
+  <h3>
+    cat
+  </h3>
+  <p
+    className="animate__animated animate__flash"
+  >
+    Loading...
+  </p>
+  <div
+    className="card-grid"
+  />
+</Fragment>
+`;
+
+exports[`Pruebas en componente GifGrid debe de mostrar items cuando se cargan imagenes con useFecthGifs 1`] = `
+<Fragment>
+  <h3>
+    cat
+  </h3>
+  <div
+    className="card-grid"
+  >
+    <GifGridItem
+      id="ABC"
+      key="ABC"
+      title="Cualquier cosa"
+      url="http://localhost/cualquiercosa/jpg"
+    />
+  </div>
+</Fragment>
+`;

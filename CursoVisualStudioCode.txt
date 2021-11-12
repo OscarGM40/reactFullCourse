@@ -1,0 +1,26 @@
+			CURSO MEJORAR EN VSC
+
+Tip:IntellisSense no es mas que una palabra bonita para decir autocompletado
+	PARTE 7 MOVIMIENTO DE LINEAS
+Para ordenar lineas se usa ALT + ↓ o arriba
+	PARTE 9 COMENTARIOS
+Para comentar toda una linea no hay problema, para comentar varias lineas o 
+importante, media linea o solo una parte no valdrá el de toda la linea
+	PARTE 11 CREAR ARCHIVO
+Puedo crear un archivo con CTRL+ClickDerecho(según SO)
+<script src="assets/js/app.js"></script> <- ctrl + click para que lo cree
+	PARTE 12 BORRAR LINEAS
+Puedo borrar lineas con CTRL + SHIFT + K y puedo seleccionar todas las ocurrencias con CTRL + SHIFT + L
+	PARTE 13 DESHACER-REHACER
+Si uso SHIFT + CTRL + Z puedo rehacer(más fácil que con CTRL + Y)
+	PARTE 14 MODO ZEN
+Puedo entrar en el modo Zen con CTRL+ K-Z.Parece útil
+IMPORTANTE:La terminal integrada siempre se lanza en la ruta del proyecto
+	CREAR SHORTCUTS(Wrap with abbreviation)
+Puedo seleccionar rápido con CTRL + SHIFT + Teclas de direccion a los lados y entrecomillar por ejemplo
+Puedo usar F1 + Wrap with Abbreviation para envolver en una tag HTML
+Sin embargo es mejor crear un shotcut  
+	MANEJO DE PESTAÑAS 
+Muchas veces abrimos muchos archivos, los atajos son igual que chrome, CTRL + W para cerrar
+CTRL+ SHIFT+T para reabrir la ultima y CTRL + k CTRL +w para cerrar todo.Aparte de poder moverme con CTRL+TAB 
+

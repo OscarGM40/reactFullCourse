@@ -1,0 +1,27 @@
+Para subir una App a GitHubPages puedo hacerlo desde el package.json
+Tendré que instalar en modo DEV el modulo gh-pages:
+>>npm install gh-pages --save-dev 
+En el package.json debo agregar la propiedad homepage:
+The homepage property with its value being the string http://{username}.github.io/{repo-name} , where username is your GitHub username and {repo-name} is the name of your app’s Github repository. So in my case, its https://yajassardana.github.io/demo-app.
+In the existing scripts property, we need to add the predeploy and deploy script fields:
+
+
+"scripts": {
+2
+    "predeploy":"npm run build",
+3
+    "deploy":"gh-pages -d build"
+4
+}
+Debe quedar asi ↓↓↓
+https://dzone.com/storage/temp/13699494-screenshot-153.png
+
+				DEPLOYMENT
+				
+ejecuta el comando npm run deploy:
+>>npm run deploy
+
+		CHANGES AFTER DEPLOY				
+		
+Cada vez que haga un cambio debo hacer de nuevo el deploy:
+>>npm run deploy <- despues de cada push al remoto redeploy

@@ -1,0 +1,518 @@
+                                   Curso React Seccion 6
+								   
+En esta seccion crearemos una nueva aplicacion,en ésta veremso comunicacion entre componentes,como realizar peticiones a APIs con un custom Hook:
+					Qué veremos en esta sección?
+
+1- Custom Hooks
+2- Fetch hacia un API
+3- Comunicación entre componentes
+4- Clases de CSS
+5- Animaciones
+6- Enviar métodos como argumentos
+7- Crear listados
+8- keys
+9- Giphy
+
+Esta es una aplicación pequeña pero muy ilustrativa que explica cómo utilizar React + customHooks para poder resolver necesidades en específico que podremos re-utilizar después.								   
+
+                                  PARTE 68-69
+								  
+Creamos la App y la renombramos a 04-gif-expert-app. React da algun consejo sobre como estructurar un proyecto, como por ejemplo no usar mas de 3-4 niveles de anidacion.
+
+				PARTE 70 LISTA DE CATEGORIAS								  
+				
+NOTA: la snapshot se toma cuando se lanza el test en consola.
+No se recomienda usar el index autogenerado por React para eliminar el warning de No Key Provided, pues ese index puede cambiar y React SI lo toma en cuenta y nos puede dar resultados inesperados.
+Se recomienda usar un identificador unico,como un id o una propiedad única:
+ 
+ categories.map((category) => {
+         return <li key={category}>{category}</li>
+      }) <- de momento nos vale category, lo iremos perfeccionando
+				
+* Realizar un map automáticamente iterará por cada elemento de una colección de forma separada y además lo devuelve,a diferencia de un for que sólo itera pero no incluye el return.Es por esto que se usa en React,porque el map devuelve automáticamente el elemento iterado tras finalizar con él.
+
+Hay varias formas de cambiar el State,y cuando tenga un arreglo puedo agregar antes o despues del estado,que será un arreglo usando el operador SPREAD: 
+
+1-  setCategories(
+      [ ...categories,"Hunter X"]);	 <- primero lo que ya tenia y despues el valor,es decir que agrego al final
+
+2- setCategories( ["Hunter",...categories] ); <- primero el valor y despues lo que ya tenia,es decir que agrego al principio.
+
+* Esto se puede traducir como "el nuevo estado es el estado anterior mas el string"HunterX".Logicamente el estado es un arreglo de strings
+Donde queramos como programadores.
+Tmb se suele usar una funcion flecha en el interior del setState para mayor manejo:
+
+//Forma Uno: directamente lo asignamos
+/* setCategories(
+  [ ...categories,"Hunter X"]); */
+
+//forma Dos: con una Arrow Function
+ setCategories(cats => [...cats,"Hunter X"])	<- esto nos abrirá nuevas posibilidades que veremos mas adelante.Como por ejemplo mandar el setter al hijo y no tener acceso al getter del useState.
+
+<GifHijo setter={setCategories} /> <- si mando el setter al hijo no veré al getter 'categories' y tengo que usar la forma de la arrow function
+
+* En el hijo
+setCategories((state) => [...state,"newValue"] ) 
+NOTA: En cuanto defina un useState sólo podré cambiar ese state con el setter.
+RESUMEN: si el estado es un array puedo agregar al principio o al final con el operador spread
+
+				PARTE 71 COMPONENTE ADDCATEGORY   
+				
+Este componente va a ser un simple input englobado en un form para poder hacerle submit.Importante: el refresh del navegador al hacer submit es algo de muchos años atrás y no deberia sucedea,pero no lo quitan asi que lo debo controlar en cualquier lenguaje,aplicación,etc...r.
+
+Logicamente el componente llevará un estado local que rescata el string del input:
+
+const AddCategory = () => {
+  const [inputValue, setInputValue] = useState("Hola Mundo");
+
+  const handleInputChange = (e) => {
+    setInputValue(e.target.value);
+  };
+
+  const handleSubmit = (e) => {
+     e.preventDefault();
+  };
+  
+return (
+      <form onSubmit={handleSubmit}>
+        <input type="text" value={inputValue} 
+        onChange={handleInputChange} />
+      </form>
+  );
+};
+
+				PARTE 72 Comunicación Entre Componentes				
+
+Recuerda que en React los eventos se disparan hacia arriba,hacia el padre,
+NOTA: perfectamente puedo crear un formulario con un único input.No tengo porque ponerle un botón de submit,el Enter en el Input hará un submit también si sólo hay un input(INTERESANTE)
+				
+En cuanto al string que rescatamos lo necesitamos mandar al Componente Padre(fijate que es el getter,es decir un estado).
+La manera más sencilla(aunque hay varias) sería mandarle la funcion setCategories (lo que se manda es la referencia a la funcion) al componente Hijo:
+
+<AddCategory setCategories={setCategories} />
+Esta vez le mandamos la funcion setter, pero podemos mandarle el estado tmb.
+Ademas ,vamos a necesitar la version con la Arrow Function pues no estamos pasando el estado como argumento:
+
+  const handleSubmit = (e) => {
+     e.preventDefault();
+     setCategories((cat) => [...cat,inputValue]) <- cat va aser el state
+     console.log('Submit hecho')
+  };				
+  
+Es la unica forma que hay de acceder al estado desde otro componete.Podriamos mandar el estate,pero con esta funcion callback es suficiente
+Aun hay un pequeño problema de validacion,pues tmb manda un String vacio, ademas tmb vamos a limpiar el input:
+
+  const handleSubmit = (e) => {
+     e.preventDefault();
+
+     if(inputValue.trim().length > 2){
+     setCategories((cat) => [...cat,inputValue])
+     setInputValue('')
+     }
+	 
+Vamos a poner como requeria esta funcion, para ello usaremos el modulo core prop-types:
+import PropTypes from 'prop-types'
+
+AddCategory.propTypes = {
+	setCategories: PropTypes.func.isRequired,
+}	
+
+Por ultimo,si pasamos de tener un estado por defecto a esto:
+ const [inputValue, setInputValue] = useState('Hola mundo); <- de aqui
+ const [inputValue, setInputValue] = useState(); - a aqui
+
+Nos dara el warning de que un componente esta cambiando a un input de incontrolado a controlado.Esto es porque asi es 'undefined':
+
+const [inputValue, setInputValue] = useState(); y el value estara undefined, con lo que no es un componente controlado.
+
+Esto se arregla pasando simplemente un string vacio para que no sea undefined:
+const [inputValue, setInputValue] = useState("");
+Recuerda,un useState() vacio el componente no está controlado,en cuanto lo inicialize a un valor ya si esta controlado(en principio solo es un warning,pero siempre que lo vea se refiere a esto,al valor inicial de useState).
+
+					PARTE 73 OBTENER LAS IMAGENES 
+					
+Nuestra aplicacion ya consigue traer datos desde un input.Ahora queremos hacer un componente que note que cuando haya un nuevo elemento haga la peticion HTTP,traiga las imagenes y las veamos en la UI.
+Lo primero será crear un componente que reciba eso como argumento y dentro de él realizaremos la peticion HTTP:
+
+* Lo llamaremos GifGrid y será todo el grupo de Cards relacionado con esa peticion(usé 4 al final).
+
+Tip:las peticiones se hacen asincronas porque asi esperamos a la respuesta,si son sincronas podriamos tratar de hacer algo sobre un objeto que no existe aun y será undefined y reventará la app cual asinta.
+
+NOTA: hacer un map(e => ()) con esos parentesis indica que estoy devolviendo un objeto entre esos parentesis.Fijate que por defecto React siempre crea un return () .Pero ser son opcionales.
+
+NOTA: ejecutar la aplicación de lama y ver si se le renderiza semidescontroladamente los componentes.Creo que es algo que es inevitable.
+
+						PARTE 74 USEEFFECT					
+						
+Tenemos un problema tal como tenemos el codigo con esa funcion en el body del componente y es que si el estado cambia esa funcion se va a volver a ejecutar.
+Esto es asi porque React detecta un cambia y tiene que actualizar las referencias,ejecutando todo de nuevo, no solo eso si no que si tenemos otro setImagenes que cambie el estado en ese body entrará en un ciclo infinito de re-renderizaciones.
+
+La respuesta es useEffect. Va a permitirnos ejecutar cierto código de manera condicional.Como segundo argumento tiene un array de dependencias.Cada vez que cambie una de estas se volverá a disparar este efecto,además de que se ejecutará una vez al montarse el componente.					
+Tip:useEffect se ejecuta exactamente justo despues de que React haya actualizado el DOM.	
+
+UseLayoutEffect tmb toma un efecto como primer argumento y un array de dependencias como segundo y devuelve una funcion flecha como limpieza o undefined si no la incluimos:
+import React, {useLayoutEffect } from "react";
+
+const APP = props => {
+  useLayoutEffect(() => {
+    //Do something and either return undefined or a cleanup function
+    return () => {
+      //Do some cleanup here
+    };
+  }, [dependencies]);
+};
+La diferencia entre ellas esta en el momento cuando son invocadas.Para entender cuando estos hooks son invocados es importante entender los pasos de un componente al re-renderizarse:
+1-El usuario interactua con la app(hace un click)
+2-Cambia el estado de un componente
+3-El DOM es mutado
+4-Los cambios son pintados en pantalla
+5-La funcion cleanup es invocada para limpiar efectos de anteriores renderizados si las dependencias de useEffect han cambiado
+6-El hook useEffect es llamado despues de la limpieza
+
+Si un componente es renderizado la primera vez, la funcion cleanup no es invocada porque no hay ningun 'efecto' que limpiar.
+
+La diferencia entre useEffect y useLayoutEffect es que useEffect es invocado despues de que el DOM haya sido pintado, mientras que useLayoutEffect es invocado sincronamente antes de que los cambios se pinten en la pantalla.LA secuencia anterior se sutituiria por esta otra:
+
+1-El usuario interctua con la app(hace un click
+2-Cambia el estado de un componente
+3-El DOM es mutado
+4-La funcion cleanup es invocada para limpiar efectos de anteriores renderizados si las dependencias de useEffect han cambiado
+5-El hook useLayoutEffect es llamado despues de la limpieza
+6-Los cambios son pintados en la pantalla
+
+Bien ,esto es fácil de entender, entonces, cuando deberiamos usar useLayoutEffect?
+Deberiamos usar useLayoutEffect si nuestro efecto va a mutar el DOM.useEffect es llamado despues de que la pantalla sea pintada,por lo tanto mutar el DOM de nuevo creará un flickering effect(un parpadeo) si la mutacion es visible en el cliente
+useLayoutEffect al ser llamado antes de pintar los cambios eliminará este parpadeo.
+Aun asi se recomienda usar useEffect y sólo cambiar cuando la situacion lo requiera
+
+				PARTE 75 Mostrar los titulos de las imagenes
+				
+Ya teniamos la data filtrada con solo los campos id,title y url, la fijamos al estado y hacemos un map.Fijate como es aun mejor idea desestructurar las propiedades a usar en el map:
+       {
+           images.map( ({id,title})  =>
+           <li key={id}>{title}</li>)
+        } necesitaremos englobarlas entre ({})De esta forma no necesitamos usar img.id, img.url img.title...
+
+Ya no vamos a usar esa lista,si no que mandaremos por props todo el objeto a otro componente que lo recibe.Recuerda que era una lista de Cards asi que este componente será cada Card:
+  images.map((img) =>(
+           <GifGridItem key={img.id} {...img}/>
+
+Mandar asi {...img} los datos hace que se reciba cada propiedad en un objeto independiente(básicamente lo que hacemos es mandar las propiedades de ese objeto una a una, es como si mandáramos id, title, url de forma independiente).
+Al esparcir las propiedades ya no tengo una sino todas:
+const GifGridItem = ( { title,url } ) <- fijate que no rescato el id.Esta es la ventaja de usar el spread,que recojo las que quiera(pero mandé todas).
+Fijate que es el que usé al hacer setState([...state,"newThing"] ya que esparce todo el array.
+Este es el operador Spread que esparce las propiedades(el operador REST hace lo contrario, condensandolas en una sola)
+
+				PARTE 77 METODOS HELPERS		   								
+
+Realmente no necesitamos hacer la peticion HTTP en el componente, podemos extraer la funcion y llamarla desde el componente:
+  useEffect(() => {
+
+    getGifs(category)
+    .then(setImages);
+    
+  }, [category]);
+
+Veremos que nos da un warning con la category,pudiera ser que si cambia queremos que vuelva a ejecutar el efecto.Por eso React me avisa.
+
+							PARTE 78 CUSTOM HOOK  
+							
+Crear un custom Hook es extraer logica de algun lado y porder reutilizarla.Vamos a crear un customHook que nos permita ,cuando el componente conde llamemos al hook cargue,inmediatamente realizar la peticion fecth y ademas indicarme cuando estoy cargando los datos y cuando ha terminado esa carga.
+
+Para crear un custom Hook se recomienda crear una subcarpeta llamada 'hooks'.Tmb es un estandar llamarle al archivo useXXXX para que el resto de programadores sepan que es  un hook.
+
+Los hooks no son mas que funciones.Pueden manejar estados,pueden manejar funciones,pueden usar reducers...Por el momento simplemente debemos observar que abstraimos una parte lógica a un hook que hemos echo nosotros.
+
+							PARTE 79							
+							
+Cad vez que el componente cambie va a llamar a useFecth() y ejecutara la llamda a la API,esto lo habiamos controlado en un useEffect, asi que lo tenemos que implementar en el customHook.
+Perfectamente podemos implementar el useEffect en un custom Hook:
+
+export const useFetchGifs = (category) => {
+  
+   const [state, setState] = useState({
+    data: [],
+    loading: true,
+  });
+
+
+  useEffect(() => {
+        
+      setTimeout(() => {
+           
+           getGifs(category).then(
+              imgs => setState({
+                 data: imgs,
+                 loading: false
+              })
+           )
+
+        },3000)
+
+    }, [category]); 
+
+							PARTE 80 Animate.CSS							
+							
+Vamos al recurso y veremos un enlace a animate.css.Son animaciones por clases css sumamente ligeras.Podemos instalar esta libreria con npm o yarn o mediante una CDN:
+npm i animate.css	y despues impotar el archivo css(ver doc) 
+
+		SECCION 7 PULIR LA APP Y SUBIRLA A GITPAGES						
+		
+Vamos a desplegar la app despues de pulirla un poco.Veremos:
+
+Aprender cómo realizar backups a repositorios de Git
+
+Subir nuestro repositorio a GitHub
+
+Uso de Github Pages
+
+Desplegar nuestra aplicación de React
+
+Generar build de producción de nuestra aplicación
+
+Aunque es una sección pequeña, les puede servir para desplegar infinidad de proyectos de React de forma gratuita, sin contar que tendrán respaldos de sus proyectos por si llegan a perder su trabajo que tenían localmente en su computadora.		
+
+			PARTE 84 Preparacion del proyecto
+			
+Para generar el build de una aplicacion de React  usaremos npm run build,esto creará la carpeta build con los compilados.
+Si queremos ver la aplicacion haciendo doble clik veremos que falla, ya que estamos usando el protocolo file y la applicacion debe servirse en un sevidor(investigar protocolo file)
+En los recursos tenemos un enlace a https://www.npmjs.com/package/http-server el cual podemos instalar con npm i  -g http-server y montará un servidor sumamente sencillo y rápido.Probemoslo(hay que instalar como superusuario)
+Despues vamos a la carpeta buil y arrancamos el server con http-server -o
+
+Una vez probado este pequeño servidor creamos un proyecto git, hacemos los gitignore y renombramos la carpeta build a 'docs' (importante: esto es para gitpages y debe hacerse)			
+
+Lo enlazamos a un repositorio remoto y en GitHub buscamos en Settings la opcion githHubPages, alli pulsamos en el primer comboBox y seleccionamos master branch/docs folder.
+Al final a mi me quedó la branch(gh-pages( y directorio (/root)
+https://oscargm40.github.io/react-giphy-app/ <- ta aqui
+
+		SECCION 8 PRUEBAS SOBRE LA APP ANTERIOR(GIF-APP)
+
+¿Qué veremos en esta sección?
+
+1- Seguir el camino de las pruebas
+2- Pruebas en componentes específicos
+3- Pruebas en componentes de forma individual
+4- Pruebas con customHooks
+5- Esperar cambios en un customHook
+6- Simular eventos en inputs y formularios
+7- Simular llamadas a funciones
+8- Evaluar si existen elementos en el componente
+
+En esta sección seguiremos expandiendo todo lo que habíamos visto anteriormente en otras secciones de pruebas, pero ahora veremos más a detalle los temas y adicionalmente introduciremos nuevos conceptos y nuevos tipos de pruebas.
+
+			PARTE 88 CONFIGURAR EL AMBIENTE DE PRUEBAS	
+			
+Como estamos en la version 17 usaremos la beta:
+
+npm install --save-dev @wojtekmaj/enzyme-adapter-react-17			
+npm install --save-dev enzyme
+npm install --save-dev enzyme-to-json
+
+import Enzyme from 'enzyme';
+import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
+
+import {createSerializer} from 'enzyme-to-json';
+
+Enzyme.configure({ adapter: new Adapter() });
+
+expect.addSnapshotSerializer(createSerializer({mode: 'deep'}));
+
+		PARTE 89 ACTUALIZAR SNAPSHOTS Y USANDO PROPTYPES 
+		
+El componente eanterior GifGridItem requeria dos props.La tarea es hacerlas requeridas con PropTypes(pan comido -_-)
+
+		PARTE 90 MAS PRUEBAS EN COMPONENTE GIFGRIDITEM		
+		
+Rescatar el text es facil con el método text().Recuerda que para buscar es con find().Pero si queremos buscar atributos HTML?Enzyme provee ciertas caracteristicas para trabajar con esos atributos que en la parte de React se conocen como properties.
+Tenemos el método props(), el metodo prop():
+
+      const img = wrapper.find('img');
+      console.log(img.html(),'metodo html')
+      console.log(img.props().src,'metodo props.atributo')
+      console.log(img.prop('src'),'metodo prop(atributo)')		
+
+Cualquiera de los dos nos vale.Podemos comprobarlo con:
+
+      expect(img.prop('src')).toBe(props.url);
+      expect(img.prop('alt')).toBe(props.title);		
+	  
+Comprobemos ahora si tiene cierta clase css.Lo más sencillo es usar el método includes():
+	  const div = wrapper.find('div');
+      //console.log(div.props().className,'props del div');
+      const clases = div.props().className.split(' ');
+
+      expect(clases[2]).toBe("animate__bounce");
+      expect(div.prop('className').includes('animate__bounce')).toBe(true);	  
+	  se puede hacer .not.toBe(false) para decir lo mismo
+	  
+Nota: no se recomienda includes() porque no es exactamente asi como funciona,lo mejor es usar hasClass()
+expect(div.hasClass("animate").toBeTruthy();
+
+				PARTE 93 SIMULAR CAMBIOS EN UN INPUT	 
+				
+Vamos a simular cambios en en input, para ello lo buscamos con find(sólo hay uno) y simulamos su evento change:
+ 
+     const input = wrapper.find('input');
+	 input.simulate('change') <- en test solo es el evento sin el  'on'				 
+	 
+					PARTE 95 Simular un SUBMIT
+					
+Podemos llamar a una funcion con Jest usando su metodo fn():
+ const setCategories = jest.fn(); esto ejecuta la funcion
+Ahora podremos saber si fue llamada,cuantas veces fue llamada.
+
+Vamos a simular  el onSubmit, pero acuerdate que lleva el evento por argumento:
+
+ wrapper.find('form').simulate('submit',{preventDefault:()=>{}});
+Como hemos usado el e.preventDefault hay que proporcionarlo.
+Si por ejemplo hubieramos usado mas cosas tmb hay que proporcionarlas.
+
+Tip: preventDefault:()=>{} puede ser acortado en las ultimas versiones a preventDefault(){}
+
+expect( setCategories ).not.toHaveBeenCalled(); 
+Vamos ahcer esta prueba,pues solo con el submit no deberia llamarse(deberia contener algo el input antes).Fijate como hay muchos toHaveBeenCalled(with,times,lastCalled....)
+
+Veremos que dará mal la prueba, pues la anterior prueba ha dado un valor al inputValue y si hará el submit.Debemos limpiar los valores en lacabecera de anteriores pruebas para cada prueba:
+
+   let wrapper = shallow(<AddCategory  setCategories={setCategories}/>)
+   
+beforeEach(() => {
+   jest.clearAllMocks();
+   wrapper = shallow(<AddCategory  setCategories={setCategories}/>)
+})
+
+Ademas habra que poner dentro del beforeEach la inicializacion del componente y afuera tmb para que nos dé el autocompletado jest.
+
+La funcion jest.fn() permite simular la funcion que tenga como asignacion(es una simulacion para testeo,no cambiará nada)
+
+Podemos evaluar si una funcion ha sido llamda con cierto tipo de argumentos(coimo otra funcion,numeros o un strin:
+
+   const input = wrapper.find("input");
+      input.simulate("change",{target:{value:"mock"}});
+      const inputAfter = wrapper.find("input");
+      expect(inputAfter.prop("value")).toBe("mock");
+      wrapper.find('form').simulate('submit',{preventDefault(){}});
+      expect(setCategories).toHaveBeenCalledTimes(1);
+      expect(setCategories).toHaveBeenCalledWith(expect.any(Function));
+      expect(input.prop('value')).toBe("");
+	  
+La linea que hace esto es expect(setCategories).toHaveBeenCalledWith(expect.any(Function))
+
+							96 COMPONENTE GifGrid
+							
+Este componente llama a nuestro custom Hook.Debemos esperar que primero loading este en true y no haya data y despues, al cargar, el loading pase a false y esto obligue a renderizarse al componente.
+Podemos simular la llamada a nuestro customHook con la funcion jest.mock(ruta a la funcion):
+
+import { useFetchGifs } from '../../hooks/useFetchGifs';
+
+jest.mock('../../hooks/useFetchGifs');							
+
+Despues, dentro de cada test podemos llamar a esa fucnion y pasarle valore(en este caso data debe ser un array de objetos):
+
+test(...)
+const gifs = [{ 
+   id: 'ABC',
+   url: 'http://localhost/cualquiercosa/jpg', 
+   title: 'Cualquier cosa'
+}]
+
+      useFetchGifs.mockReturnValue({ 
+         data: gifs, 
+         loading: false
+      })
+	  
+	  PARTE 97 EVALUAR SI EXISTE UN COMPONENTE
+	  
+Nuestras pruebas de Snapshots no son tan fiables como pensamos.Vamos a comprobar que si loading es false no exista ningun parrafo(debe ser asi):
+ {loading && <p className="animate__animated animate__flash">Loading...</p>}	  
+ 
+   expect( wrapper.find('p').exists() ).toBeFalsy();
+
+    expect( wrapper.find('GifGridItem').length ).toBe( gifs.length ) 
+	
+De paso comprobamoa que haya tantos elementos GifGridItem como la longitud del aray(pues debe de haber una card por cada objeto data del array)	
+
+				PARTE 98 PRUEBAS EN GIFEXPERTAPP
+				
+Es el componente principal.Una manera que tenemos de poder hacer pruebas a este componente es mandarle una prop que sea un array vacio para contrastarla con el arreglo de categorias:
+
+const GifExpertApp = ( { defaultCategories= [] } ) => {				
+
+ const categories = ['One Punch', 'Dragon Ball'];
+
+         const wrapper = shallow( < GifExpertApp defaultCategories={categories} /> );
+
+         expect( wrapper ).toMatchSnapshot();
+         expect( wrapper.find('GifGrid').length ).toBe( categories.length );
+		 
+podemos añadir esa prop y mirar si coinciden las posiciones.
+
+			PARTE 99 PRUEBAS SOBRE LOS CUSTOM HOOKS		 
+			
+Lo primero es que no podemos hacer un match contra el snapshot porque no hay algo que se vaya a renderizar.Lo segundo es que no pdemos llamar al hook asi por asi:
+ Invalid hook call. Hooks can only be called inside of the body of a function component.
+
+En recursos tenemos un enlace a una libreria echa para hacer pruebas con Hooks(react-hook-testing-library) y es muy utilizada:
+npm install --save-dev @testing-library/react-hooks 
+
+Hay que importar a mano:
+import { renderHook } from '@testing-library/react-hooks';
+
+Esta libreria nos va a permitir usar el metodo renderHook( ()=>{} ) y pasarle un hook a la funcion anonima:
+
+ const resp = renderHook( () => useFetchGifs("One Punch") );
+   console.log(resp,'resp')
+
+    {
+        result: { all: [Getter], current: [Getter], error: [Getter] },  
+        rerender: [Function: rerender],
+        unmount: [Function: unmountHook],
+        waitFor: [AsyncFunction: waitFor],
+        waitForNextUpdate: [AsyncFunction: waitForNextUpdate],
+        waitForValueToChange: [AsyncFunction: waitForValueToChange]     
+      }
+	  
+La devolucion es un objeto con varias propiedades y funciones.
+
+						PARTE 100 WaitForNextUpdate	  
+						
+Recordemos que el renderHook regresa varias cosas.En este caso vamos a usar la funcion waitForNextUpdate() que retorna una promesa.Esta funcion se dispara cuando sucede un cambio en el estado de nuestro customHook.
+Sin embargo tenemos un problema, cuando hemos ejecutado la prueba uno se disparó el useEffect, se hizo el setState y se desmontó el componente.Ahora nos dirá que no puede operar en un componente desmontado,etc (podemos comentar la primera prueba y pasará)
+La solucion pasa por esperar tmb en el primer hook, asi el primer test espera al segundo:
+
+describe("Probando el custom Hook", () => {
+ 
+   test("Debe de retornar el estado inicial", async () => {
+ 
+   //const { data, loading } = useFetchGifs("One Punch");
+      
+   const { result, waitForNextUpdate} = renderHook( () => useFetchGifs("One Punch") );
+   //console.log(resp,'resp')
+   const { data, loading } = result.current;
+   console.log(data,loading)
+
+   //debemos esperar 
+   await waitForNextUpdate();
+   expect( data ).toEqual([])
+   expect( loading ).toBeTruthy();
+
+  });
+
+test('Debe de retornar un arreglo de imagenes y el loading en false', async () => {
+   
+   const { result, waitForNextUpdate } = renderHook( () => useFetchGifs("One Punch") );
+
+   await waitForNextUpdate();
+
+   const { data, loading } = result.current;
+
+   expect( data.length ).toBe(4)
+   expect( loading ).toBeFalsy();
+
+})						
+Nuestro hook no es tan sencillo como parece,seguiremos trabajando en esto,además se recomienda leer la documentacion
+
+Según la documentación de React Hooks  waitForNextUpdate lo que hace es retornar una promesa que se resuelve la próxima vez que el hook sea renderizado, generalmente por una actualización del estado resultante de una actualización asíncrona.
+
+El renderHook lo que hace es crear un componente de React auxiliar para poder ejecutar nuestro hook. Al ser un componente de React, este se actualiza cuando cambiamos el estado del mismo utilizando setState, cosa que hace nuestro useFetchGifs asíncronamente cuando obtiene el resultado de la API. Es por ello que en el primer ejemplo estamos tomando el valor y luego le decimos que espere al setState . De esta forma tomamos el estado antes de ser actualizado con el resultado. De forma similar, en la segunda prueba nos interesa obtener el estado luego de ser actualizado, por lo que utilizamos waitForNextUpdate para indicarle que espere a la actualización del estado y luego tomamos su valor.
+

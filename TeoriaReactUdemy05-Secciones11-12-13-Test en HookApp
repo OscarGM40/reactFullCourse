@@ -1,0 +1,451 @@
+			SECCION 11 Profundizando Hooks Use COntext
+			
+UseConetxt es necesrio para evitar que los componentes se manden recursivamente props muchos niveles.UseConetxt va a romper esa necesidad de mandar las props a descendientes o ancestros a traves de intermediarios.
+La idea es tener centralizada la informacion(en el Context) y si algun componente necesita informacion pedirla al Context y no por props.
+
+Hay ciertos casos en los que es necesaria la comunicacion padre-hijo pero muchos casos es mejor usar Context:
+
+						¿Qué veremos en esta sección?
+
+Context
+
+Provider
+
+useContext
+
+React Router
+
+Links y NavLinks
+
+CreateContext
+
+SPA ( Single Page Application )
+
+El objetivo de la sección es principalmente aprender sobre el Context, el Router es un valor agregado que explotaremos mucho más en próximas secciones, pero al usar un Router, podemos explicar claramente el problema y necesidad del context.			
+
+						PARTE 136 Introduccion al Context
+						
+Imaginemos dos Componentes Login y Home PAge que no estan contenido uno dentro de otro.Sin embrago,si debne mandarse datos como el usuario entre ellos.
+Una manera de solucionar esto es tener un espacio en un nivel superior que almacene el user y setUser y llamar a ese espacio Context
+Un Context es un contenedor que se va a ubicar en un nivel superior que le va a permitir a los hijos de él poder leer y ejecutar métodos que se encuentren dentro de ese COntext
+
+
+					PARTE 138 Implementar Router
+
+Esto lo hacemos porque queremos realizar aplicaciones SPA.
+El elemento Switch es un HOC( tmb lo es BrowserRouter ).
+Deberiamos usar exact en toda las rutas para asi evitar tener que poner la menos especifica abajo,etc.
+
+<Switch>
+         <Route exact path="/" component={ HomeScreen } />
+         <Route exact path="/about" component={ AboutScreen } />
+         <Route exact path="/login" component={ LoginScreen } />
+</Switch> 					
+
+					PARTE 139 BARRA DE NAVEGACION
+					
+Podriamos usar simples anchors tags pero no es la manera ideal,pues se nota el refresh del navegador:
+<li>
+	  <a href="./">Home</a>
+	</li>
+	<li>
+	  <a href="./about">About</a>
+	</li>
+	<li>
+	  <a href="./login">Login</a>
+</li>		
+Teniendo React Router no debemos usar <a> y usar Los LINK(usarán otro atributo tmb):
+<li>
+          <Link to="./">Home</Link>
+        </li>
+        <li>
+          <Link to="./about">About</Link>
+        </li>
+        <li>
+          <Link to="./login">Login</Link>
+        </li>
+En elmomento en que cambiemos ahor veremos que no se hace un refresh y que se redirecciona mucho más rápido,pue no hay que hacer la petición al servidor para traer toda la página.
+Podriamos usar Link to ="/" en vez de usar una ruta absoluta (podemos usar rutas relativas y absolutas).
+
+Normalmente se suele configurar un componente para cuando no exista la ruta(el típico 404).Simplemente se suele poner al final un componente y si llega hasta ahi es que no encontró ninguna ruta:
+         
+		 <Route exact path="/" component={ HomeScreen } />
+         <Route exact path="/about" component={ AboutScreen } />
+         <Route exact path="/login" component={ LoginScreen } />
+         <Route component={ NotFoundComponent } />		<-Sillega a este punto no hizo match con ninguna ruta conocida(tmb podriamos redireccionar)
+
+Hay otro componente que es el NavLink.La diferencia entre ambos es que el NavLink me va a permitir saber la ruta en la cual me encuentro y activar alguna clase CSS mediante su propiedad activeCllasname, la cual es única del NavLink y la hace mejor elección.Además no hay que olvidarse que siguen los mismos principios y hay que usar match o nos hará match la ruta / en todos los lados:
+ <NavLink exact  activeClassName="active text-uppercase" className="nav-link nav-item" to="./">Home</NavLink>
+        </li>
+        <li className="nav-item">
+          <NavLink exact  activeClassName="active" className="nav-link nav-item" to="./about">About</NavLink>
+        </li>
+        <li className="nav-item">
+          <NavLink  exact activeClassName="active" className="nav-....
+
+					PARTE 140 createContext y useContext		  
+					
+Es momento de crear comunicacion entre estos componentes.Podemos ver que estos componentes son hermanos y que habiamos dicho que habia que colocar la logica en un nivel superior(puede ser el Switch o el router)					
+
+Un Context es básicamente un componente.EL método createContext(defaultValues) crea un contexto que debemos almacenar en una constante y exportarlo para poder usarlo en otros archivos:
+
+import { createContext } from 'react';
+
+export const UserContext = createContext(null) 
+IMPORTANTE: UserContext es un HOC,será un componente que embraze a otros:
+
+import {UserContext} from './UserContext'
+
+export const MainApp = () => {
+   return (
+         <UserContext.Provider value={}>
+               <AppRouter />
+
+         </UserContext.Provider>  Toda nuestra app tendra un contexto compartido.Acuerdate que este hace de proveedor tmb.
+		 
+Sin embargo,tmb nos falta especificar qué es lo que queremos compartir,para ello usamos la propiedad value={} donde el objeto es lo que queremos compartir.Para tener acceso a estos valores usaremos el Hook useContext:
+      
+	  
+	  const user = {
+            id:1234,
+            name:'Fernando',
+            email:'fernando@gmail.com'
+      }
+      
+      
+   return (
+         <UserContext.Provider value={user}>		 
+		 
+Si ahor a por ejemplo queremos acceder a estos datos en otro componente usamos el Hook:
+
+export const HomeScreen = () => {
+
+const userContext = useContext(UserContext); 	
+El Hook va a llevar el Componente que hace de Provider por argumento.Guardamos la ejecucion en una constante.Esa variable será lo que hemos guardado en el value, en este caso sencillo es el objeto user
+
+							PARTE 131 useContext
+Tip:UserContext va a estar denpiendet de los cambios que sucedan en el value y los actualizará. 
+Hasta ahora tenemos a cceso a la lectura de los valores de ese contexto,pero, ¿Y si los queremos modificar?.Nada nos impide en lugar de retonar simplemente un objeto con las propiedades mandar un objeto  entero con varias propiedades:
+
+ <UserContext.Provider value={{user,setUser}}>
+
+Si el context recibe una modificaion informará a todos sus hijos redibujando cada una de esa partes afectadas.
+
+			SECCION 12 Pruebas sobre nuestor Custom Hooks 
+			
+							¿Qué veremos en esta sección?
+
+Pruebas sobre Hooks y CustomHooks
+
+Ese es el tema principal, demostrar cómo podemos evaluar cada unos de los hooks aplicados anteriormente con sus casos reales de uso.
+
+Hay varios extras, como la prueba de un Reducer, que realmente no es nada complicado, también quiero aclarar qué nos toca evaluar a nosotros y qué no es responsabilidad nuestra.
+
+Pantalla completa
+			
+						PARTE 145 Creando el ambiente de Pruebas
+						
+De nuevo instalamos enzyme, enzyme-to-json, la libreria beta de l github y react.hook-testing library,las 4 como DEV dependencies
+
+					PARTE 146 Probando hook UseCounter						
+					
+Cuando llamemos a este hook deberiamos tener un numero y tres funciones
+Tip: en linux un aruta absoluta empezará con / ejemplo:
+>> cd /media/user
+Si queremos volver al directorio anterior podemos usar cd - (muy util)
+
+					PARTE 147	Probando funciones
+					
+Cuandoq ueramos hacer alguna accion debemos usar la funcion act( () => { accioones a realizar }), la cual debemos importar tmb de @testing-library/react-hooks igual que hemos hecho con el metodo renderHook(esta libreria está especializada en testeo de Hooks.
+					
+import { renderHook,act } from "@testing-library/react-hooks";
+
+  act(() => {
+      increment();
+    }); <- dentro de la funcion callbak ejecutamos lo que necesitemos de forma normal.
+
+					PARTE 148 Probando custom hook useForm	
+					
+Fijate como es subnormal simula el evento de añadir un nombre
+
+act( ()=> {
+	target: {
+		name:"name",
+		value:"Melissa"
+	}
+Debemos definir y dar un valor a todas las propiedades del evento,en este caso el name y el value.Para el test es mas interesante asegurarnos que ademas las otra propiedades no han cambiado:
+
+ act( ()=>{
+
+          handleInputChange( {
+             target: {
+                 name: 'name',
+                 value:"Melissa" 
+          }})
+      
+      });
+
+      const [values] = result.current;
+
+      expect(values).toEqual({...initialForm,name: 'Melissa'});	
+
+} <- usamos el operador SPREAD
+
+						PARTE 149 probando el useFetch					
+						
+Vamos a probar el hook que hacia peticiones a la API de BreakingBad.Fijate como esperamos que lo que devuelva de forma sincrona sea los valores por defecto:
+
+const { result } = renderHook(()=> useFetch( `https://www.breakingbadapi.com/api/quotes/1`));
+
+   const { data, loading, error } = result.current;
+
+   //si lo hacemos sincrono deberiamos esperar que no haya sido realizada la peticion
+   //toBe puede llevar cualquier primitivo como argumento
+   expect( data ).toBe(null);
+   expect( loading ).toBe(true);
+   expect( error ).toBe(null);						
+				
+Para poder estar seguros que esperamos a la peticion vamos a usar la funcion waitForNextUpdate que devuelve una promesa y por ello debemos hacer async la funcion.
+
+				PARTE 150 pruebas con multiples customHooks				
+				
+Tenemos un componente anterior que implementaba dos custom Hook.Como ya los hemos probado queremos simular la llamda al hook,asiq ue hay que hacer un mock:
+
+import { useFetch } from "../../../hooks/useFetch";
+
+jest.mock('../../../hooks/useFetch') <- cuando llamemos (en este archivo sólo,obviamente) a este Hook jest simulará el hook.
+
+Esto nos va a dar problemas,porque ese hook necesita informacion por parametros.Para ello hay que pasarselo al hook con el método hook.mockReturnValue():
+ 
+ useFetch.mockReturnValue({
+         data:null,
+         loading:true,
+         error: null
+      })		 <- esto en la primera prueba nada mas empezar el bloque test
+
+Podemos importar mas hooks en el archivo ,  no solo uno	 aunque tmb nos tocará inicializarlos con los valores que necesiten ellos:
+
+import useCounter from "../../../hooks/useCounter";
+import { useFetch } from "../../../hooks/useFetch";
+
+jest.mock('../../../hooks/useFetch');
+jest.mock("../../../hooks/useCounter");
+
+  useCounter.mockReturnValue({
+      counter:10,
+	  increment
+   })  
+   
+				PARTE 151 Tarea:Interacciones con el useState
+				
+Para buscar componentes se usa tmb el método find.Busca todo,clases,tags,componentes:
+
+ test("Debe de mostrar el componente <MultipleCustomHook>", () => {
+      
+      wrapper.find('button').simulate('click');
+
+      expect(wrapper.find('MultipleCustomHooks').exists() ).toBe(true);
+
+
+   });				
+   
+				PARTE 152 Pruebas sobre el useReducer
+				
+Esta funcion siempre retornaba un arreglo.No es mas que una funcion que devuelve el state que es un Array.Podemos comprobar que añada un TODO, por ejemplo(sobre un array inicial de 3 posiciones):
+  
+  test('Debe de agregar un TODO', () => {
+
+      const state2 = todoReducer(demoTodos,{
+         type: 'add',payload: {
+               id: 4,
+               desc: 'Aprender Spring',
+               done: false
+            }
+      });
+
+      expect(state2.length).toBe(4);				
+	  
+				PARTE 153 Tareas	sobre todoReducer		   
+				
+Podemos evaluar si tmb funcionan las acciones de borrar:
+
+  test('Debe de borrar un TODO', () => {
+     //el action.payload debe ser igual al id del TODO 
+     const actionDelete = {
+        type: 'delete',
+        payload: 3
+     }
+     const state = todoReducer(demoTodos,actionDelete);
+     expect(state.length).toBe(2);
+     expect(state.find(toDo => toDo.id === 3)).toBe(undefined);
+     expect(state).toEqual([demoTodos[0],demoTodos[1]]);
+  })
+
+					PARTE 154 Pruebas en TodoListItem  
+					
+Recoredemos que para llamar a una funcion podemos usar jest.fn().Para llamar a un Hook era diferente y era con renderHook(()=>{}):
+
+ const handleDelete =jest.fn();
+   const handleToggle =jest.fn(); <- antes de los bloques de test
+
+   test('Debe de llamar a la funcion handleToggle', () => {
+      wrapper.find('p').simulate('click');
+      expect(handleToggle).toHaveBeenCalledTimes(1);
+      //espera el id del objeto y como es demoTodos[0] es el 1
+      expect(handleToggle).toHaveBeenCalledWith(1);
+
+   })					
+   
+   
+   test('Debe de tener la clase complete si el done es true', () => {
+
+      const todo = demoTodos[0]
+      todo.done = true
+      
+      const wrapper = shallow(<TodoListItem 
+         todo={todo} />)
+
+      expect(wrapper.find('p').hasClass('complete')).toBe(true);
+
+   }) Podriamos evaluar si tiene cierta clase, pero hay que cambiar ese boleano a mano, pues son simulaciones  y no cambia solo(wtf)
+   
+						PARTE 155 Pruebas en TodoList
+						
+Tip: Visual Studio Code ayuda con la importación  si está el archivo abierto.
+Tip:puedo apretar ALT +doble click y el cursor seleccionara la ocurrencia actual y ademas las puede concatenar para copiar varias cosas.
+Otro Tip: puedo hacer doble click y seleccionar toda la palabar a para poder entrecomillarla,por ejemplo.
+
+Aseguremonos que hace match la snapshot y que los TodolistItem son enviados con sus props.Recuerda que tengo el metodo at(position) para ibucarme en un aposicion de un array y el metodo props() devuelve las props:
+	console.log(wrapper.find("TodoListItem").at(0).props());						
+Tmb esta el método html() que devuelve el html de ese elemento(nada que ver con las props)Ambos métodos son imprescindibles para hacer tests.
+
+Tip: si queremos no ver todas las props con el método props() sino solo una podemos usar el metodo prop('handleDelete').Obviamente debe existir esa property.
+
+
+  test("Debe de tener tres <TodoListItem />,segun el array demoTodos", () => {
+    //  console.log(wrapper.html());
+    //es mejor evaluarlo contra la longitud del array de fakedata y no contra el numero en si
+    expect(wrapper.find("TodoListItem").length).toBe(demoTodos.length);
+    //metodos utilisimos --at(0)--html()--props()--prop('handleDelete')
+    //console.log(wrapper.find("TodoListItem").at(0).html());
+    //console.log(wrapper.find("TodoListItem").at(0).props());
+    //como son objetos diferentes apuntan a espacios de memoria diferentes y hay que usar el toEqual
+    //toBe usa el operador de equidad === y con objetos va dar false
+    expect(wrapper.find("TodoListItem").at(0).prop('handleDelete')).toEqual(expect.any(Function));	
+
+Si memorizamos componentes con React.memo() es posible que haya que setearles la propiedad displayName="String" para darle sun nokmbre en el arbol de componentes:
+
+TodoListItem.displayName='TodoListItem'
+	
+					PARTE 156 PRUEBAS CON EL TODO ADD
+					
+No confundir con el todoApp que va despues.Este se encarga de añadir un TODO.
+Tip:saltar a  la linea de abajo:CTRL + ENTER.
+Para simular la entrada de datos a el input usaremso simulate('change') o tmb valdria prop('onChange') pues tiene esa prop el input:
+  
+   test('Debe de llamar la funcion handleAddTodo', () => {
+      //con un argumento || simplemente que sea llamado
+      const value = 'Aprender React';
+
+      wrapper.find('input').simulate('change',{
+         target:{
+            value:value,
+            name:"description"
+         }
+      });
+
+      const formSubmit = wrapper.find('form').prop('onSubmit');
+      formSubmit({preventDefault(){}});
+
+      expect(handleAddTodo).toHaveBeenCalledTimes(1)
+   *expect(handleAddTodo).toHaveBeenCalledWith(expect.any(Object));
+
+*Esta segunda asercion es muy abstracta, pues pasaria la prueba con cualquier objeto.Sin embargo, el id es el segundoa ctual del sistema,asi que¿como comprobamos eso?			Podemos decir que no nos importa el valor de esa propiedad con tal que sea un numero:
+
+      expect(handleAddTodo).toHaveBeenCalledWith({
+         id: expect.any(Number),
+         desc:value,
+         done:false
+      });		
+En realidad es tan simple como mandarle expect.any(Constructor) , en este caso Number.Acuerdate simulate o prop()para manipular el input.
+
+     
+//podemos esperar que se haya reseteado el formulario y por ello el value del input sea una cadena vacia
+      expect(wrapper.find('input').prop('value')).toBe('');
+Normalmente vamos a estar evaluando los efectos de la llamada a cierta funcion, mas que si se ha llamado a tal o cual funcion por haber llamado a la primera(es mas preciso evaluar las consecuencias)
+
+
+			PARTE 157
+			
+Podemos usar el mount cuando queremos probar toda la aplicacion en general.Es muy parecido al shallow,funciona igual(tendremos el find(), la diferencia está en el nivel en el cual es renderiza da la aplicación.
+Hemos elegido este metodo porque vamos a neesitar informacion de sus hijos y el contexto en que está corriendo:
+
+test('debe de agregar un TODO', () => {
+
+      const wrapper =  mount( <TodoApp />);
+
+      act(()=> {
+         wrapper.find('TodoAdd').prop('handleAddTodo')(demoTodos[0]);
+         wrapper.find('TodoAdd').prop('handleAddTodo')(demoTodos[1]);
+      })
+      
+      expect(wrapper.find('h1').text().trim()).toBe('Todo App ( 2 )');
+      
+   })
+   
+Fijate como las autoejecutamos con find(Component).prop(funcion)(valor a pasar a la ejecucion de la funcion)   
+   
+Una forma sencilla de hacer un mock del localStorage.Para ello usamos la Interface Storage que ya nos proporciona JS¿?:
+
+Storage.prototype.setItem = jest.fn();   
+			
+				PARTE 158 Pruebas con 09-useContext
+				
+Vemos que si sacamos una snapshot no hace match pues nopuede desestructurar user del hook useContext.¿Como hacemos para establecer un contexto?Habra que pasarle el HOc asi:
+
+const wrapper = shallow( <- ojo con la funcion shallow
+   <UserContext.Provider value={{user}}>
+      <HomeScreen />
+   </UserContext.Provider>)		
+   
+Ahora la prueba pasará,pero si vemos el snapshot solo renderizó el HOC.Es por el  metodo shallow , ya que solo renderiza el componente principal.En estos casos que tengamos mas de un componente habrá que usar el método mount():
+   
+   const wrapper = mount(
+   <UserContext.Provider value={{user}}>
+      <HomeScreen />
+   </UserContext.Provider>)
+   
+					PARTE 159 Pruebas en LoginScreen
+					
+Fijate como esta vez hay que pasarle al Context el método setUser,pues en el componente original lo traemos del useContext:
+const { setUser } = userContext;
+Siempre tendremos que traer en el value lo que hubieramos pasado en el componente al contexto(basicamente lo traemos de vuelta para poder usarlo)En esta caso fue el metodo en el anterior teniamos esto:const {user} = userContext; asi que nos traiamos el user.
+
+  const wrapper = mount(
+    <UserContext.Provider value={{
+       setUser: setUser
+    }}>
+      <LoginScreen />
+    </UserContext.Provider>
+  );					
+	  
+							SECCION 13 BONUS
+							
+					¿Qué veremos en esta sección?
+
+Subir código a nuestro repositorio
+
+Tener un listado de customHooks y código que podemos reutilizar
+
+Una idea para mantener tu repositorio ordenado con ejemplos
+
+No es una sección obligatoria, pero puede ayudarles a tener su código ordenado y fácil de utilizar en proyectos futuros.							
+
+					PARTE 165 Creando Documentación
+					
+Tips para lenguaje MarkDown:
+1.Tres backtips indican que lo de dentro es código:
+```
+  const  url ='endpoint de una api';
+   const { data: null, loading:true, error: null} = useFetch(url);
+```					
