@@ -2,19 +2,143 @@
 
 ¿Qué veremos en esta sección?
 
-CRUD hacia Firestore
-
-Expandiendo nuestro estore añadiendo otros reducers
-
-Seleccionar y subir archivos
-
-Animaciones adicionales a nuestra aplicación
-
-Limpieza en el logout
+1- CRUD hacia Firestore
+2- Expandiendo nuestro estore añadiendo otros reducers
+3- Seleccionar y subir archivos
+4- Animaciones adicionales a nuestra aplicación
+5- Limpieza en el logout
 
 Esta sección está enfocada ahora en las entradas de nuestro diario, asegurándose de que grabe únicamente en el documento del usuario autenticado.
 
 		PARTE 254 Continuación del proyecto
 
 Vamos a cambiar el name del usuario hardcodeado en el Sidebar, para ello usaremos un useSelector para que acceda al store:
+
  const {name} = useSelector(state => state.auth) <- en el div le mandamos el name(debí cometer algún error)
+
+					RESUMEN TODA LA SECCION
+
+Resumen amplio por culpa del SSD: creamos el siguiente reducer notesReducer que  tendrá un arreglo de notas y una nota activa.
+Recuerda que con thunk puedo acceder al state en el return:
+
+export const startNewNote = () => {
+  return async (dispatch, getState) => {
+    const uid = getState().auth.uid;
+* GetState es una convención,el argumento es posicional.
+
+Fijate como puedo guardar algo en Firestore(normal database):
+
+  const uid = getState().auth.uid;
+    
+    const newNote = {
+      title: "",
+      body: "",
+      date: new Date().getTime(), //mls actuales
+    };
+    
+    try {
+      /* Desde firebase 9 el método es addDoc y no add */
+      const docRef = await db.collection(`${uid}/journal/notes`).add(newNote);
+      // console.log(docRef);
+      dispatch(activateNote(docRef.id,newNote))
+    
+Simplemente uso el método add:Promise<>(variableToSave) sobre una colección cualquiera(en este caso será id/journal/notes.
+Como estamos con thunk disparamos otra acción sincrona,activando la nota que creamos(justo cuando le dé a new Entry la activo y guardo)
+
+Para hacer el get Firebase trabaja con snapShots(importante):
+
+export const loadNotes = async (uid) => {
+   // para obtener la información apunto a un path y le hago get.De igual manera que add devuelve una promise get al resolverse devuelve una collectionSnapshot,ojo
+   const notesSnap = await db.collection(`${uid}/journal/notes`).get();
+   const notes = [];
+
+   notesSnap.forEach( snapHijo => {
+      // console.log(snapHijo.data());
+      notes.push({
+         id: snapHijo.id,
+         ...snapHijo.data(), 
+      })
+   })
+Cada snapShot hija permite acceder a su información con el método data().	
+
+Puedo ordenar la consulta con el método orderBy(field,direction):
+
+ const notesSnap = await db.collection(`${ uid }/journal/notes`).orderBy("date", "desc").get();
+
+IMPORTANTE:fijate que al actualizar la nota activa disparo muchísimas veces una acción(como en un onChange).Esto no es importante,se espera que dispare muchas acciones en una aplicación que utilize redux.
+Además es una acción sincrona,lo cual es mucho menos importante que si fuera una acción asíncrona disparada muy seguida.
+
+Recuerda que Firestore no permite campos undefined:
+
+    * Pongo el campo url por defecto a null por si viene undefined
+    const { id, url=null,...rest} = note;
+
+    try {
+      // db.collection es para trabajar en una coleccion
+      // await db.collection(`path...`)
+      // lo que quiero ahora es trabajar en un documento,
+      await db.doc(`${uid}/journal/notes/${note.id}`)
+      .update({ ...url, ...rest })  
+      dispatch(refreshNote(note))
+      Swal.fire("Saved",rest.title, 'success');
+
+NOTA:fijate que trabajar con una colección es db.collection(pathDelaColeccion) mientras que si quiero trabajar con un documento es db.doc(pathAlDoc).
+Fijate que también podia haber echo otras cosas como:
+if(!note.url){
+  delete note.url; }
+
+CLOUDINARY: recuerda que hay que hacer alguna configuración,pues necesito un preset.Voy a settings(la ruedita) y a la pestaña upload y alli bajo hasta ver 'Add upload preset'.
+Alli le doy un nombre y permito subir desde el modo 'unsigned'(Si es signed tienen que estar registrados en cloudinary??).
+En la pestaña dashboard tengo todos los detalles :
+
+Account DetailsDownload: YML, PY
+Cloud name:	oscargm40
+API Key: 945155439291529
+API Secret:	***************************
+API Environment variable:
+CLOUDINARY_URL=cloudinary://***************:***************************@oscargm40
+Base delivery URL:	http://res.cloudinary.com/oscargm40 ▼
+Secure delivery URL:	https://res.cloudinary.com/oscargm40 ▼
+API Base URL:	https://api.cloudinary.com/v1_1/oscargm40 ▼
+
+*NOTA: es a esta API Base URL a donde tengo que apuntar,pero concatenando /upload,con el método POST,y agregando un file,aparte de una cabecera extra(upload_preset).Este upload_preset es el name del preset que hemos creado hace nada(el mio es react-journal-app)
+	 
+Fijate que CLOUDINARY también permite comprimir los recursos y subir videos.Es una opción excelente
+
+IMPORTANTE: fijate como hizo que un simple texto(un h6 o un span,etc) llamara a un input type file simplemente referenciandolo y simulando su click al hacer click en el primero:
+
+const inputRef = useRef(); <- lo referencio según lenguaje,me valdría un document.querySelector en JS o en Angular una localRef
+
+<input type="file" style={{"display":"none"}} ref={inputRef} onChange={handleInputFile}> 
+Ahora el onClick en el span:
+<span onClick={openFileSelector}>Imagen</span>
+const openFileSelector = () => inputRef.current.click();
+Tras abrir el file explorer y elegir una imagen
+const handleInputFile= (e) => 
+setFile(e.target.file[0])
+
+Fijate como hemos creado un helper que sube la imagen seleccionada y devuelve la url
+
+const fileUpload = (file) => {
+  
+const cloudUrl= "https://cloudinary.../upload"
+ 
+const form = new FormData();
+form.append('file',file)
+form.append('upload_preset','react-journal-app');
+
+try{
+  const resp = await fetch(cloudUrl,{
+    method:'POST',
+    body:form <- un form no hay que pasarlo como string
+  }
+  if(resp.ok){
+    const cloudResp = await resp.json(); <- recuerda que me dan un string
+    return cloudResp.secure_url
+  else{
+   return null;
+catch(err)...
+
+NOTA: CLOUDINARY me devuelve un string con la url de la imagen o video que suba.Fijate que parecen una opción de la ostia.
+
+
