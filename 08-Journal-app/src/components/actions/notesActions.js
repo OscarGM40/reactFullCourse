@@ -20,12 +20,21 @@ export const startNewNote = () => {
       const docRef = await db.collection(`${uid}/journal/notes`).add(newNote);
       // console.log(docRef);
       dispatch(activateNote(docRef.id,newNote))
+      dispatch(addNewNote(docRef.id,newNote))
       
     } catch (error) {
       console.log(error);
     }
   };
 };
+
+export const addNewNote = (id,note) => ({
+  type: types.notesAddNew,
+  payload: {
+    id,
+    ...note,
+  },
+});
 
 export const startSaveNote = ( note ) => {
   return async(dispatch,getState) => {
@@ -40,6 +49,7 @@ export const startSaveNote = ( note ) => {
     // en realidad no necesito el delete,puedo cambiar el undefined por un null ya que puedo guardar un null  
     // saco las propiedades
      const { id, url=null,...rest} = note;
+     console.log(url)
      /*  console.log(note,'note')
       console.log(id,'id') */
 
@@ -51,7 +61,7 @@ export const startSaveNote = ( note ) => {
       // await db.collection(`path...`)
       // lo que quiero ahora es trabajar en un documento,
       await db.doc(`${uid}/journal/notes/${note.id}`)
-      .update({ ...url, ...rest })  
+      .update({ url, ...rest })  
       dispatch(refreshNote(note))
       Swal.fire("Saved",rest.title, 'success');
     } catch (error) {
@@ -88,11 +98,46 @@ export const setNotes = (notes) => ({
 // como es una tarea asincrona es obvio qué debo usar
 export const startUploading = (file) => {
   return async ( dispatch, getState ) => {
-    // const { active: activeNote } = getState().notes;
+    const { active: activeNote } = getState().notes;
 
+    Swal.fire({ 
+      title: 'Uploading...',
+      text: 'Please wait...',
+      allowOutsideClick: false,
+      onBeforeOpen: () => {
+        Swal.showLoading()
+      }
+    });
     // llamo a mi helper que me devuelve el campo secure_url
     const fileUrl = await fileUpload(file);
-    console.log(fileUrl,'fileUrl')
+    activeNote.url = fileUrl;
+    // console.log(fileUrl,'fileUrl')
 
+    dispatch(startSaveNote(activeNote))
+    Swal.close();
+    
   }
 }
+
+export const startDeleteNote = (id) => {
+  return async (dispatch, getState) => {
+    const uid = getState().auth.uid;
+    
+    try {
+      await db.doc(`${uid}/journal/notes/${id}`).delete();
+      dispatch(deleteNote(id));
+    } catch (error) {
+      console.log(error);
+    }
+  }
+}
+
+export const deleteNote = (id) => ({
+  type: types.notesDelete,
+  payload: id
+})
+
+export const notesLogout = () => ({
+  type: types.notesLogoutCleaning
+})
+

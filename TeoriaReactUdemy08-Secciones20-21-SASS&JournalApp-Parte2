@@ -141,4 +141,69 @@ catch(err)...
 
 NOTA: CLOUDINARY me devuelve un string con la url de la imagen o video que suba.Fijate que parecen una opción de la ostia.
 
+Fijate como la libreria Swal permite me usar un loading que tengo que cerrar yo:
+
+    Swal.fire({ 
+      title: 'Uploading...',
+      text: 'Please wait...',
+      allowOutsideClick: false,
+      onBeforeOpen: () => {
+        Swal.showLoading()
+      }
+    });
+    // llamo a mi helper que me devuelve el campo secure_url
+    const fileUrl = await fileUpload(file);
+
+    console.log(fileUrl,'fileUrl')
+
+    Swal.close();
+Es con Swal.showLoading(),tengo que cerrarlo.
+
+Puedo usar un directorio en concreto en CLOUDINARY usando el header 'folder':
+
+   const form = new FormData();
+   form.append('file', file);
+   form.append('upload_preset','react-journal-app')
+   form.append('folder', 'react-journal-app'); 
+
+Para borrar procedo igual,apunto al documento con la referencia a la bd y llamo a delete:
+
+export const startDeleteNote = (id) => {
+  return async (dispatch, getState) => {
+    const uid = getState().auth.uid;
+    
+    try {
+      await db.doc(`${uid}/journal/notes/${id}`).delete();
+      dispatch(deleteNote(id));
+    } catch (error) {
+      console.log(error);
+    }
+await dbRef.doc(path).delete() <- no puede ser más fácil asin.Como siempre hay que respaldar a redux para que se borre en la db y en la ui.
+
+Fijate como pueden dispararse acciones en varios reducers.Que sean reducers diferentes no tiene importancia alguna.
+
+ export const startLogout = () => {
+    return async (dispatch) => {
+      await firebase.auth().signOut();
+      dispatch(logout); <- dispath al authReducer
+      dispatch(notesLogout()) <- pero este es para el notesReducer
+    };
+  };
+  
+Esta claro que hay un export const logout en el authActions y un export const notesLogout en el notesAction.Esto es importante,asinto.
+
+	SECCION 22 PRUEBAS CON REDUX,FIREBASE,CLOUDINARY Y AUTENTICACIÓN
+
+  ¿Qué veremos en esta sección?
+
+1- Profundizando en pruebas
+2- Pruebas en Firebase y Firestore
+3- Pruebas con reducers
+4- Variables de entorno de desarrollo, test y producción
+5- Pruebas en tareas asíncronas
+
+Esta sección continúa el tema de las pruebas unitarias y de integración con el objetivo de seguir cubriendo temas nuevos. Las pruebas conforme se van avanzando, efectivamente se van haciendo más complejas pero la idea es darles a ustedes las herramientas para que puedan probar cualquier cosa que ustedes necesiten.
+
+					VIDEO 278 JOURNAL APP - TESTING
+
 

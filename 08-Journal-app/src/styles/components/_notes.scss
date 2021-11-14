@@ -48,5 +48,11 @@
 
 .notes__image {
    box-shadow: 5px 5px $dark-grey;
-   height: 200px;
+   width: 100%;
+   
+}
+.notes__img {
+   width: 100%;
+   height: 780px;
+   object-fit: cover;
 }

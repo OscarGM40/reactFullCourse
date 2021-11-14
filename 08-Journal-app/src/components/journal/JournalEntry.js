@@ -18,7 +18,7 @@ export const JournalEntry = ({ id, title, body, date,url }) => {
   
   
   return (
-    <div className="journal__entry pointer" 
+    <div className="journal__entry pointer animate__animated animate__flipInY animate__fast"
       onClick={setActiveNote}>
       {
         url &&

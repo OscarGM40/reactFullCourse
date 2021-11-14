@@ -63,14 +63,15 @@ journal__sidebar-navbar h3 {
 }
 
 .journal__entry {
-
    background-color: white;
    border-radius: 4px;
    color: $dark-grey;
    display: flex;
+   width: 100%;
    margin-bottom: 10px;
    overflow: hidden;
    cursor: pointer;
+   min-height: 94px;
 }
 
 .journal__entry-picture {
@@ -78,11 +79,16 @@ journal__sidebar-navbar h3 {
    width: 75px;
    min-width: 75px;
    min-height: 94px;
-
+   
 }
 
 .journal__entry-body{
-   padding: 10px;
+   padding: 15px 10px 0px 20px;
+   width: 100%;
+   display: flex;
+   flex-direction: column;
+   align-items: start;
+   justify-content: start;
 }
 .journal__entry-title{
    font-size: 14px;
@@ -94,11 +100,11 @@ journal__sidebar-navbar h3 {
 }
 
 .journal__entry-date-box {
-   align-items: center;
    display: flex;
    flex-direction: column;
+   align-items: center;
    justify-content: center;
-   padding: 5px;
+   padding: 0px 5px 5px 5px;
 }
  
 .journal__entry-date-box span{

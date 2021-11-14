@@ -2,6 +2,7 @@ import { firebase, googleAuthProvider } from "../firebase/firebase-config";
 import { types } from "../../types/types";
 import { startLoading, finishLoading } from "../actions/uiActions";
 import Swal from "sweetalert2";
+import { notesLogout } from "./notesActions";
 
 // fijate que algunos si tienen la lógica(los asincronos) mientras que los sincronos( no sé si son los de redux también) solo declaran la accion.Es un poco confusa esta forma.
 export const startLoginEmailPassword = (email, password) => {
@@ -74,10 +75,13 @@ export const startRegisterWithEmailPasswordName = (email, password, name) => {
       // si bien es una Promise no se suele usar el catch pues no suele fallar
       await firebase.auth().signOut();
       dispatch(logout);
+      dispatch(notesLogout());
     };
   };
   
   export const logout = () => ({
     type: types.logout,
   });
+
+ 
   

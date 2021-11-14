@@ -9,6 +9,7 @@ export const fileUpload = async (file) => {
    const form = new FormData();
    form.append('file', file);
    form.append('upload_preset','react-journal-app')
+   form.append('folder', 'react-journal-app');
    
    try {
       const resp = await fetch(cloudUrl,{
