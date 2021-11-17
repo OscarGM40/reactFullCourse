@@ -1,7 +1,5 @@
 
 
-
-
 export const fileUpload = async (file) => {
 
    const cloudUrl='https://api.cloudinary.com/v1_1/oscargm40/upload';
@@ -21,7 +19,8 @@ export const fileUpload = async (file) => {
          // recuerda que debo retornar el campo secure_url
          return cloudRest.secure_url;
       }else {
-         throw await resp.json();
+         return null;
+         // throw await resp.json();
       }
    } catch (error) {
       console.log(error)

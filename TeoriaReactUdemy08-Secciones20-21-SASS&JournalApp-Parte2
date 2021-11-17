@@ -206,4 +206,107 @@ Esta sección continúa el tema de las pruebas unitarias y de integración con e
 
 					VIDEO 278 JOURNAL APP - TESTING
 
+Configuro el ambiente de test y creo el primer test que compruebe los types.Es más importante de lo que parece comprobar los types ya que si agrego o elimino uno lo sabré fácilmente con el test.
+
+				VIDEO 285 PRUEBAS DE CARGA DE ARCHIVOS
+
+Vamos a probar el fileUpload.js que es un helper que recibe un file y devuelve la URL de CLOUDINARY.
+
+test('should return a valid url', async() => {
+
+   const resp = await fetch('url a una imagen');
+   const blob = await resp.blob();
+   const file = new File([blob],'image.png') <- el nombre da igual
+   const url = await fileUpload(file);
+
+  expect(typeof url).toBe("string") <- comprobar que es un string puede valer
+
+Por último,también compruebo si no se le envía un file válido que la url sea nula  const file = new File([],'horse.jpg')
+  const url = await fileUpload(file);
+  expect(url).toBe(null) 
+
+						VIDEO 286 SDK DE CLOUDINARY
+
+Fijate que cada vez que arranca la suite de tests se crean varias imágenes.Vamos a usar el SDK para borrarlas inmediatamente:
+>npm i cloudinary -D <- fijate que no la necesito en producción,asinto
+
+import cloudinary from "cloudinary";
+
+cloudinary.config({ 
+  cloud_name: 'sample', 
+  api_key: '874837483274837', 
+  api_secret: 'a676b67565c6767a6767d6767f676fe1',
+  secure: true
+});
+
+* Tengo todos los values en el dashboard.
+
+    // borrar imagen por id
+         const segments = url.split('/');
+         const imageId = segments[segments.length - 1].split(".")[0];
+         const folderName = "react-journal-app"
+
+         cloudinary.v2.api.delete_resources(`${folderName}/${imageId}`,{},() => {
+
+         }     
+         );
+
+				CAMBIOS EN REACT ROUTER 6
+
+Ya no se puede acceder a la propiedad activeClasName de un <NavLInk>En su lugar está el método isActive:
+<button className={ ({isActive}) => 'nav-item nav-link' + (isActive ? 'active' : '') }
+NOTA: fijate que className="navbar" y className={'navbar'} es lo mismo,el segundo es una expresión Javascript que regresa un string,que es lo que necesita el CSS
+
+Ya no es const history = useHistory ahora es const navigate = useNavigate y despues simplemente se llama a navigate('url') 
+También ha cambiado el testeo y mockeo de funciones como este hook.Ver documentación o videos si fuera necesario.
+
+				VIDEO 287 PRUEBAS EN EL AUTHREDUCER
+
+Realmente testear esta función es pan comido:
+
+
+describe("Pruebas en el authReducer", () => {
+
+   const defaultState = {
+    uid: "",
+    name: "",
+  };
+
+  test("should authenticate and set the user", () => {
+    const loginAction = {
+      type: types.login,
+      payload: {
+        uid: "1hfkjhh4",
+        displayName: "John",
+      },
+    };
+
+    const state2 = authReducer(defaultState, loginAction);
+    expect(state2).toEqual({
+      uid: "1hfkjhh4",
+      name: "John",
+    });
+    
+  });
+
+  test("should logout and set the user to {}", () => {
+      const logoutAction = {
+         type: types.logout,
+      };
+   
+      const state2 = authReducer(defaultState, logoutAction);
+      expect(state2).toEqual({});
+   });
+
+   test("should return the default state when an unkown action is sent", () => {
+      const state = authReducer(defaultState, { type: "UNKNOWN" });
+      expect(state).toEqual(defaultState);
+   })
+});
+
+En el siguiente video empezaremos las pruebas en las acciones asíncronas y con redux,lo cual es mucho mas interesante.
+
+					VIDEO 288 PRUEBAS EN ACCIOONES SINCRONAS - UIACTIONS
+
+
 

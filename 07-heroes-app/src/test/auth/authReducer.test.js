@@ -7,7 +7,7 @@ describe('Pruebas en el componente authReducer', () => {
    const defaultState = {
       logged:false
    }
-   test('Debe de retronar el estado por defecto', () => {
+   test('Debe de retornar el estado por defecto', () => {
    const state = authReducer(defaultState,{});
    expect(state).toEqual(defaultState);
 
