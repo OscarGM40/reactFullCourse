@@ -308,5 +308,189 @@ En el siguiente video empezaremos las pruebas en las acciones asíncronas y con 
 
 					VIDEO 288 PRUEBAS EN ACCIOONES SINCRONAS - UIACTIONS
 
+Vamos a empezar con las acciones sincronas,que son más sencillas.Realmente estas acciones son una función que devuelve un objeto con las propiedades type y payload,asi que el test es straightforward.
+
+ test('should work all actions', () => {
+     const setErrorAction = setError('ERROR!!!')
+     
+       expect(setErrorAction).toEqual({
+         type: types.uiSetError,
+         payload: 'ERROR!!!'
+       }); 
+
+     const removeErrorAction = removeError()
+     
+       expect(removeErrorAction).toEqual({
+         type: types.uiRemoveError,
+       }); 
+
+			VIDEO 289 PRUEBAS DE ACCIONES ASÍNCRONAS NOTESACTION.JS
+
+Esto es lo interesante de esta sección.Veamos como testear el startNewNote:
+
+1- de alguna manera debo poder llamar al método startNewNote y que se llame al return async(dispatch,getState) y que se dispare todo el procedimiento.
+
+2- Fijate que startNewNote no recibe argumento alguno y regresa una función(ya que regresamos un async(dispatch,...).Asi pues tenemos una función que regresa una función asíncrona para testear
+
+3- Dentro de la función obtengo el uid,creo una nota y la guardo en Firestore.Tras ello llamo dos veces al dispatch con otras funciones(activateNote y addNewNote)
+
+4- Para ponerle guinda al pastel el guardado en Firestore va a fallar si no estoy autenticado(fijate que en la app si lo estará el usuario,pero no en los tests).
+
+Realmente parece más complicado de lo que es.Lo primero es que vamos a necesitar del store de redux,para ello vamos a usar la librería redux-mock-store:
+>npm i redux-mock-store -D
+La web aqui: https://www.npmjs.com/package/redux-mock-store
+
+Fijate que este módulo va a crearme un mock de mi store y me va a indicar con que argumentos fue llamado ese store,qué acciones fueron disparadas,...
+
+Como estamos trabajando con acciones asíncronas necesito thunk también:
+
+import configureStore from 'redux-mock-store';
+import thunk from 'redux-thunk'
+
+const middlewares = [thunk];
+const mockStore = configureStore(middlewares);
+
+Ahora hay que llamar a este método mockStore con un estado válido.Un estado válido es aquel que sea necesario para la prueba,en este caso,necesitabamos un uid y una nota para el startNewNote.
+const store = mockStore({
+  auth:{
+    uid:'ldfjfju543k5'
+      }
+}) 
+La ventaja de esta librería es que ahora puedo disparar acciones con esta instancia 'store':
+
+test('...), async () => {
+  await store.dispatch( startNewNote() ); <- fijate que startNewNote era asíncrono asi que await store.dispatch,asinto.
+
+Sin embargo Firebase no me dejará subir la imágen por las reglas que tengo(auth !== null):
+7 PERMISSION_DENIED: Missing or insufficient permissions
+
+IMPORTANTE: podría logearme,pero es un error mezclar estas pruebas con lo que debería ser el ambiente de producción que ya he dejado en Firebase.
+Asi que vamos a tener que crearnos una base de datos aislada que simule la DB de producción(al fin y al cabo no necesitamos testear si funciona la autenticación en Firebase,se supone que funciona)
+
+			VIDEO 290 CREAR BASE DE DATOS DE DESARROLLO
+
+Vamos a crear una nueva base de datos en Firebase(en realidad no debería tener dos,sino tres:testing,desarrollo y producción,pero por motivos didácticos hemos mezclado desarrollo y producción)
+
+NOTA: cuando se ejecuta el npm run test el ambiente cambia a testing en la app.Esto lo puedo ver en la variable process.env.NODE_ENV(development | test | production).De esta manera puedo cambiar la configuracion de la base de datos.
+
+if (process.env.NODE_ENV === "test") {
+  //  configuracion de la db para testing
+  firebase.initializeApp(firebaseConfigTesting);
+} else {
+  //  ambiente development o production
+  firebase.initializeApp(firebaseConfig);
+}
+Veremos otra manera creando variables globales de entorno,aunque esta es válida también.
+
+Como puedo acceder a las acciones que se dispararon en este mock es muy fácil hacer aserciones:
+est("startNewNote should create a new note", async () => {
+    store.dispatch(startNewNote());
+    const actions = store.getActions();
+
+    expect(actions[0]).toEqual({
+      type: types.notesActive,
+      payload: {
+        id: expect.any(String),
+        title: "",
+        body: "",
+        date: expect.any(Number),
+      },
+    });
+
+    expect(actions[1]).toEqual({
+      type: types.notesAddNew,
+      payload: {
+        id: expect.any(String),
+        title: "",
+        body: "",
+        date: expect.any(Number),
+      },
+    });
+
+Fijate que store.getActions() devuelve un arreglo de acciones.Por último,al igual que con la imagen,vamos a borrar también el registro.
+
+await db.doc(`TESTING/journal/notes/${actions[0].payload.id}`).delete();
+
+					VIDEO 291 VARIABLES DE ENTORNO
+
+Fijate que si cambiara algo en un futuro en el proyecto de Firebase que tengo enlazado me obligaría a volver al código y cambiarlo en él también.
+Para evitar esto vamos a usar los archivos .env que proporciona React:
+1- .env <- default
+2- .env.local <- sobreescribe localmente y es cargado en cualquier entorno menos el de test
+3- .env.development | .env.test | .env.production <- especificos al entorno
+4- .env.development.local | .env.test.local | .env.production.local <- sobreescribe localmente al entorno especifico
+    
+Puedo usar $DOMAIN para apuntar al dominio donde esta la app.Recuerda que process.env.REACT_APP_VARIABLE siempre será un string cuando la rescate del archivo,ya que sólo guarda strings.Si necesitara un número tendré que parsear la llamada a la variable de entorno.
+Además en React se usará REACT_APP como prefijo 
+
+Con todo esto  en mente creo los archivos .env.test para un ambiente de test y .env.development 
+IMPORTANTE: gitignore por defecto no va a ignorar ningun .env. pero si ignora los .env.local cuando el framework lo escriba él(como con create-react-app o ng new)(los ignora ya que son para local)
+
+Fijate que siempre debería crear varios .env(sobre todo .env.local y .env) para tener una configuración en local distinta de la de remoto(incluo sería buena idea crear .env.local.development y .env.production??).
+Ojo,parece que estos nombres de archivos son solo para el frontend.
+
+			VIDEO 292 PRUEBAS EN STARTLOADING NOTES Y STARTSAVENOTES
+
+NOTA: fijate que para acceder al mockStore tengo que usar el método getState sobre el objeto 'store'.
+
+IMPORTANTE:  por defecto el mockStore esta guardando todas las acciones que han sido disparadas.Tiene su lógica que las almacene ya que es uan libreria para testeo.Lo que hay que hacer es limpiar las acciones con clearActions():
+
+beforeEach(() => {
+  store.clearActions();
+})
+
+NOTA: fallback es como una alternativa a algo.Investigar más.
+
+  test('should load all notes', async () => {
+    const uid = store.getState().auth.uid;
+    await store.dispatch(startLoadingNotes(uid)); 
+    const actions = store.getActions();
+    // console.log(actions)
+    
+    expect(actions).toEqual(expect.arrayContaining([
+      {
+        type: types.notesLoad,
+        payload: expect.any(Array),
+      },
+    ]));
+
+Realmente vale con comprobar que el payload es un array,da igual qué traiga,me está trayendo los datos,además en el console.log veo que es un array de una posición y sólo tengo un documento,asi que me está haciendo bien el GET ALL(mejor hubiera sido probar con dos xd).
+
+Para la siguiente accion si que hay que traer el id de Firebase y hasrdcodearlo:
+
+test("should update the note", async () => {
+    const note = {
+      id: "OWBUgUS0dk8L6emyb64m",
+      title: "Testing",
+      body: "Testing",
+      date: new Date().getTime(),
+    };
+
+    await store.dispatch(startSaveNote(note));
+    const actions = store.getActions();
+    // console.log(actions)
+
+    expect(actions[0]).toEqual({
+      type: types.notesUpdate,
+      payload: note,
+    });
+
+    expect(actions[0].payload).toMatchObject({
+      id: expect.any(String),
+      title: "Testing",
+      body: "Testing",
+      date: expect.any(Number),
+    });
+
+    const docRef = await db
+      .doc(`/TESTING/journal/notes/${actions[0].payload.id}`)
+      .get();
+
+     console.log(docRef.data());
+    expect(docRef.data().title).toBe(note.title);
+
+			VIDEO 293 PRUEBAS EN LA ACCION DE SUBIR UN ARCHIVO
+
+
 
 

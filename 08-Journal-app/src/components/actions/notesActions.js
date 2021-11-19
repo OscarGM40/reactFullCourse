@@ -49,7 +49,7 @@ export const startSaveNote = ( note ) => {
     // en realidad no necesito el delete,puedo cambiar el undefined por un null ya que puedo guardar un null  
     // saco las propiedades
      const { id, url=null,...rest} = note;
-     console.log(url)
+    //  console.log(url)
      /*  console.log(note,'note')
       console.log(id,'id') */
 
