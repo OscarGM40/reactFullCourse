@@ -18,7 +18,7 @@ describe('Pruebas en el helper fileUpload', () => {
          const file = new File([blob], 'horse.jpg')
          const url = await fileUpload(file);
 
-         console.log(url)
+         // console.log(url)
          
          expect(typeof url).toBe('string');
 

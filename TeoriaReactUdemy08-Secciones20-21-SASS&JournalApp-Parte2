@@ -491,6 +491,68 @@ test("should update the note", async () => {
 
 			VIDEO 293 PRUEBAS EN LA ACCION DE SUBIR UN ARCHIVO
 
+Vamos a testear el startUploading,comprobaremos que se añade el campo url.Fijate que da algun error,como que no se llamó a window.toScroll().Podemos crear nuestra propia propiedad en el setup.js:
 
+const noScroll = () => {};
+Object.defineProperty(window,'scrollTo',{value:noScroll,writable:true})
 
+También parece que vale global.scrollTo= jest.fn();
+
+					MOCK DE CUALQUIER FUNCION
+
+NOTA: fijate que nosotros ya hemos probado que el helper funciona,asi que lo que vamos a hacer es un mock para que el helper uploadFile me devuelva una url en concreto   await store.dispatch(startUploading(file)); <- no hace falta probar el startUploading ni crear un file,pues ya lo hemos probado
+
+Para hacer el mock de un archivo se usa jest.mock(ruta,callback) donde en la callback hay que especificar una funcion o más de ese archivo y lo que devuelven.Ejemplo:
+jest.mock('../../helpers/fileUpload', () => ({
+  fileUpload: jest.fn( () => 'https://hola-mundo.com/cosa.jpg' ),
+  anotherFunction: jest.fn(callback)
+}))
+Fijate que hago el mock de un archivo y despues de cada función que tenga en él,en este caso sólo tengo el helper pero pueden ser varias.Cada función a su vez es un jest.fn(callback) donde en esa cb retorno lo que quiera.
+
+OJO:esto es para la exportación por defecto,si le hice un export const debo usar
+jest.mock("../../helpers/fileUpload", () => ({
+  __esModule: true,
+  default: jest.fn(() => {
+    return Promise.resolve("https://hola-mundo.com/cosa.jpg");
+  }),
+}));
+
+Cuando se utiliza una exportación predeterminada o por default de un modulo de ES6, se debe especificar la propiedad "__esModule: true", Esta propiedad normalmente la genera Babel / TypeScript, pero aquí debe configurarse manualmente.
+
+Es un tema de compatibilidad. Saludos.
+
+				VIDEO 294 PRUEBAS EN LAS ACCIONES DE AUTH
+
+Fijate que no hay diferencia entre declarar algo justo tras el describe o arriba de él.En ambos casos queda de forma global al archivo:
+
+* ESTO PODRIA IR DEBAJO DEL DESCRIBE QUE TAMBIÉN QUEDA GLOBAL
+import configureStore from "redux-mock-store";
+import thunk from "redux-thunk";
+
+const middlewares = [thunk];
+const mockStore = configureStore(middlewares);
+
+const initialState = {}
+let store = mockStore(initialState);
+
+describe('Pruebas con las acciones de Auth', () => {
+
+   beforeEach(() => {
+      store = mockStore(initialState);
+      store.clearActions();
+    });
+* En cuanto tenga que evaluar asincronia tengo que traerme la store y thunk.
+
+Fijate como para agregar un nuevo proveedor para autenticarme en Firebase ha cambiado un poco la interfaz y ahora es Agregar proveedor.Alli eligo nativa(usuario y email y creo uno para las pruebas).
+
+NOTA: cuando me toque testear el registro(creación) de usuarios,del mismo modo que hemos hecho con CLOUDINARY lo mejor es instalar el SDK(en este caso de Firebase).Con él podré registrar y justo despues borrar ese usuario.
+
+Siempre que sea posible hay que usar los SDK ya que además se instalan en desarrollo,no van a ocupar nada en producción.
+
+NOTA: fijate que comprobar que el registro falla porque el email es unique es una prueba muy válida,ya que probé que efectivamente he conectado con Firebase y que efectivamente hay un usuario ya con ese email,etc...
+A veces comprobar que algo no funciona también es un gran test.
+
+					VIDEO 296 PRUEBAS EN EL LOGIN SCREEN
+
+Puede que esta primera vez parezca un poco complejo testear este componente pero tras la primera vez será mucho más fácil además de repetitivo.
 

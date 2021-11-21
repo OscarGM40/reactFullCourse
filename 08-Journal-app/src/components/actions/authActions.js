@@ -8,17 +8,19 @@ import { notesLogout } from "./notesActions";
 export const startLoginEmailPassword = (email, password) => {
   return (dispatch) => {
     dispatch(startLoading());
-    firebase
+  
+  return firebase
       .auth()
       .signInWithEmailAndPassword(email, password)
       .then(({ user }) => {
-        dispatch(login(user.id, user.displayName));
+        dispatch(login(user.uid, user.displayName));
         dispatch(finishLoading());
       })
       .catch((e) => {
-        console.log('por aqui');
+        console.log('error en el login');
         dispatch(finishLoading());
         Swal.fire("Error", e.message, "error");
+        return (e.code);
       });
   };
 };
@@ -26,7 +28,7 @@ export const startLoginEmailPassword = (email, password) => {
 export const startRegisterWithEmailPasswordName = (email, password, name) => {
   return (dispatch) => {
     // firebase trabajará con promesas,ojo
-    firebase
+    return firebase
       .auth()
       .createUserWithEmailAndPassword(email, password)
       .then(async (userCred) => {
@@ -34,11 +36,12 @@ export const startRegisterWithEmailPasswordName = (email, password, name) => {
         // es muy conveniente acceder a este método y subir el nombre también
         await user.updateProfile({ displayName: name });
         // console.log(user)
-        dispatch(login(user.id, user.displayName));
+        dispatch(login(user.uid, user.displayName));
       })
       .catch((e) => {
-        console.log(e);
+        console.log('error en el registro');
         Swal.fire("Error", e.message, "error");
+        return (e.code);
       });
     };
   };
@@ -74,7 +77,7 @@ export const startRegisterWithEmailPasswordName = (email, password, name) => {
     return async (dispatch) => {
       // si bien es una Promise no se suele usar el catch pues no suele fallar
       await firebase.auth().signOut();
-      dispatch(logout);
+      dispatch(logout());
       dispatch(notesLogout());
     };
   };
