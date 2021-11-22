@@ -556,3 +556,87 @@ A veces comprobar que algo no funciona también es un gran test.
 
 Puede que esta primera vez parezca un poco complejo testear este componente pero tras la primera vez será mucho más fácil además de repetitivo.
 
+NOTA:fijate que al intentar hacer la snapshot me va a dar un error de que el componente necesita en el contexto a react-redux,y que puedo usar un Provider.
+Básicamente hay que facilitarle un Provider para que pueda llegar al store.
+
+Fijate que en el componente estoy usando useDispatch,useSelector(con lo que accedo al store) y también disparo acciones con el dispatch de redux.
+
+import { mount } from "enzyme";
+import { Provider } from "react-redux";
+import configureStore from "redux-mock-store";
+import thunk from "redux-thunk";
+
+const middlewares = [thunk];
+const mockStore = configureStore(middlewares);
+
+const initialState = {
+
+}
+
+let store = mockStore(initialState);
+
+const wrapper = mount(
+  <Provider store={store}>
+    <LoginScreen />
+  </Provider>
+);
+No es suficiente con usar el <Provider>.También hay que crear un store de forma similar a como ya hemos echo
+
+					VIDEO 297 TESTEAR STARTGOOGLELOGIN
+
+IMPORTANTE: fijate que cuando use mocks es buena práctica limpiarlos en el beforeEach:
+  beforeEach(() => {
+    store = mockStore(initialState);
+    store.clearActions();
+  });
+
+Bien,vamos a simular ese startGoogleLogin,de forma similar a como ya he hecho ya me traigo la accion:
+import { startGoogleLogin} from '../../../auth/authActions';
+
+jest.mock('../../../auth/authActions', () => ({
+  startGoogleLogin: jest.fn();
+}))
+
+Adicionalmente esta vez tengo que hacer un mock del método dispatch para poder disparar la funcion de arriba(pero no era de otra forma??):
+store.dispatch.fn()
+
+ya puedo esperar que hacer click en el botón de Google llame a la acción(la cual ya hemos testeado que autentifica)
+
+  test('debe de disparar la accion startGoogleLogin', async () => {
+     wrapper.find('.google-btn').simulate('click');
+       expect(startGoogleLogin).toHaveBeenCalled();
+
+      })
+
+			VIDEO 298 PRUEBAS EN EL REGISTERSCREEN
+
+Fijate como puedo buscar un componente en el ambiente de test y simplemente preguntar si existe,es decir,si lo he buscado correctamente:
+
+const emailField= wrapper.find('input[name="email"]');
+console.log(emailField.exists()); <- si me da un true es que lo he buscado bien
+
+   test("debe de hacer el dispatch de la acción respectiva", () => {
+    const emailControl = wrapper.find(".auth__input[name='email']");
+
+    emailControl.simulate("change", {
+      target: {
+        name: "email",
+        value: "",
+      },
+    });
+
+    wrapper.find("form").simulate("submit", { preventDefault() {} });
+    const actions = store.getActions();
+
+    expect(actions[0]).toEqual({
+      type: types.uiSetError,
+      payload: "Email is not valid",
+    });
+  });
+});
+Recuerda que puedo cambiar un <input> con ref.simulate("change",{ target:{ name:"email",value:"newValue"}}) <- donde el name es el name del input(email,phone,etc) y el value el nuevo value.El resto es simular el submit y esperar que se dispare la acción sincrona uiSetError.
+En el siguiente video comprobaremos más profundamente este error.
+
+				VIDEO 299 PROBANDO QUE EL MENSAJE DE ERROR EXISTA
+
+

@@ -1,5 +1,6 @@
-import { finishLoading, removeError, setError, startLoading } from "../../../components/actions/uiActions"
-import { types } from "../../../types/types";
+import { finishLoading, removeError, setError, startLoading 
+} from "../../actions/uiActions"
+import { types } from "../../types/types";
 
 
 describe('Pruebas en el uiActions.js', () => {

@@ -3,7 +3,7 @@ import moment from "moment";
 // si quiero la traduccion importar esto ↓↓
 // import "moment/locale/es";
 import { useDispatch } from "react-redux";
-import { activateNote } from "../actions/notesActions"
+import { activateNote } from "../../actions/notesActions"
 
 
 

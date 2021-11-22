@@ -2,7 +2,7 @@ import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { useForm } from "../../hooks/useForm";
-import { startGoogleLogin, startLoginEmailPassword } from "../actions/authActions";
+import { startGoogleLogin, startLoginEmailPassword } from "../../actions/authActions";
 // import validator from "validator";
 // import { removeError, setError } from "../actions/uiActions";
 
@@ -46,6 +46,7 @@ export const LoginScreen = () => {
   }; */
 
   const handleGoogleLogin = () => {
+    // console.log('objecheyt')
     dispatch( startGoogleLogin() );
   }
 

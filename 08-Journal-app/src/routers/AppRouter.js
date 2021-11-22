@@ -10,10 +10,10 @@ import { JournalScreen } from "../components/journal/JournalScreen";
 import { AuthRouter } from "./AuthRouter";
 import { firebase } from "../components/firebase/firebase-config";
 import { useDispatch } from "react-redux";
-import { login } from "../components/actions/authActions";
+import { login } from "../actions/authActions";
 import PublicRoute from "./PublicRoute";
 import PrivateRoute from "./PrivateRoute";
-import { startLoadingNotes } from "../components/actions/notesActions";
+import { startLoadingNotes } from "../actions/notesActions";
 
 export const AppRouter = () => {
   const dispatch = useDispatch();

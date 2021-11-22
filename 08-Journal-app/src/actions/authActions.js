@@ -1,5 +1,5 @@
-import { firebase, googleAuthProvider } from "../firebase/firebase-config";
-import { types } from "../../types/types";
+import { firebase, googleAuthProvider } from "../components/firebase/firebase-config";
+import { types } from "../types/types";
 import { startLoading, finishLoading } from "../actions/uiActions";
 import Swal from "sweetalert2";
 import { notesLogout } from "./notesActions";

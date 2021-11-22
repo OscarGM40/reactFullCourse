@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useForm } from "../../hooks/useForm";
-import { activateNote, startDeleteNote } from "../actions/notesActions";
+import { activateNote, startDeleteNote } from "../../actions/notesActions";
 import { NotesAppBar } from "./NotesAppBar";
 
 export const NoteScreen = () => {

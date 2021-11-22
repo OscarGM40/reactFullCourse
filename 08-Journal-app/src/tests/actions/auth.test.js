@@ -7,8 +7,8 @@ import {
   startLoginEmailPassword,
   startLogout,
   startRegisterWithEmailPasswordName,
-} from "../../../components/actions/authActions";
-import { types } from "../../../types/types";
+} from "../../actions/authActions";
+import { types } from "../../types/types";
 import "@testing-library/jest-dom";
 
 /* const user = {uid: 1234, displayName: "John"};

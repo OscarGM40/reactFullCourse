@@ -1,8 +1,8 @@
 import Swal from "sweetalert2";
-import { fileUpload } from "../../helpers/fileUpload";
-import { loadNotes } from "../../helpers/loadNotes";
-import { types } from "../../types/types";
-import { db } from "../firebase/firebase-config";
+import { fileUpload } from "../helpers/fileUpload";
+import { loadNotes } from "../helpers/loadNotes";
+import { types } from "../types/types";
+import { db } from "../components/firebase/firebase-config";
 
 // podriamos pasar el uid de cada usuario que tiene en Firebase como argumento pero también podemos usar una callback que nos proporciona thunk y nos devuelve el state.El nombre el que quiera,es el segundo argumento del return(getState aqui)
 export const startNewNote = () => {

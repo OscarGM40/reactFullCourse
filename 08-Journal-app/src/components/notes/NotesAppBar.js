@@ -1,6 +1,6 @@
 import React, { useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { startSaveNote, startUploading } from "../actions/notesActions";
+import { startSaveNote, startUploading } from "../../actions/notesActions";
 import moment from "moment";
 import "moment/locale/es"
 

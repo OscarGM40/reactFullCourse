@@ -3,8 +3,8 @@ import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useForm } from "../../hooks/useForm";
 import validator from "validator";
-import { setError, removeError } from "../actions/uiActions";
-import { startRegisterWithEmailPasswordName } from "../actions/authActions";
+import { setError, removeError } from "../../actions/uiActions";
+import { startRegisterWithEmailPasswordName } from "../../actions/authActions";
 
 export const RegisterScreen = () => {
 
@@ -15,10 +15,10 @@ export const RegisterScreen = () => {
   
   //Tarea obtener info de cada uno de los campos del formulario
   const initialState = {
-    name: "",
-    email: "",
-    password: "",
-    password2: "",
+    name: "Hernando",
+    email: "nando@gmail.com",
+    password: "123456",
+    password2: "123456",
   };
 
   const [formValues, handleInputChange] = useForm(initialState);
@@ -75,7 +75,7 @@ export const RegisterScreen = () => {
         />
 
         <input
-          type="text"
+          type="email"
           placeholder="email"
           name="email"
           className="auth__input"

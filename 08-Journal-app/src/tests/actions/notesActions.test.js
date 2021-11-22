@@ -8,16 +8,16 @@ import {
   startNewNote,
   startSaveNote,
   startUploading,
-} from "../../../components/actions/notesActions";
-import { db } from "../../../components/firebase/firebase-config";
-import { types } from "../../../types/types";
-import  { fileUpload }  from "../../../helpers/fileUpload";
+} from "../../actions/notesActions";
+import { db } from "../../components/firebase/firebase-config";
+import { types } from "../../types/types";
+import  { fileUpload }  from "../../helpers/fileUpload";
 
-// jest.mock("../../../helpers/fileUpload"); 
-// const { fileUpload:fu } = jest.requireActual('../../../helpers/fileUpload');
+// jest.mock("../../helpers/fileUpload"); 
+// const { fileUpload:fu } = jest.requireActual('../../helpers/fileUpload');
 
 jest.setTimeout(5000);
-jest.mock("../../../helpers/fileUpload", () => ({
+jest.mock("../../helpers/fileUpload", () => ({
     __esModule: true,
     default: jest.fn(() => 43),
     fileUpload: jest.fn(() =>  Promise.resolve("https://hola-mundo.com/cosa.jpg")),
