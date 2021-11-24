@@ -156,7 +156,7 @@ Si queremos volver al directorio anterior podemos usar cd - (muy util)
 
 					PARTE 147	Probando funciones
 					
-Cuandoq ueramos hacer alguna accion debemos usar la funcion act( () => { accioones a realizar }), la cual debemos importar tmb de @testing-library/react-hooks igual que hemos hecho con el metodo renderHook(esta libreria está especializada en testeo de Hooks.
+Cuandoq ueramos hacer alguna accion debemos usar la funcion act( () => { accioones a realizar }), la cual debemos importar tmb de @testing-library/react-hooks (o @testing-library/react) igual que hemos hecho con el metodo renderHook(esta libreria está especializada en testeo de Hooks.
 					
 import { renderHook,act } from "@testing-library/react-hooks";
 

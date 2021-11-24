@@ -639,4 +639,85 @@ En el siguiente video comprobaremos más profundamente este error.
 
 				VIDEO 299 PROBANDO QUE EL MENSAJE DE ERROR EXISTA
 
+Fijate de que forma tán fácil puedo crear otro initialState dentro de un test usando el scope local de const o let:
+
+  test('debe de mostrar la caja de alerta con el error', () => {
+    const initialState = {
+      auth: {},
+      ui: {
+        msgError: "Email is not valid",
+        loading: false,
+      },
+    };
+    const store = mockStore(initialState);
+
+    const wrapper = mount(
+      <MemoryRouter>
+        <Provider store={store}>
+          <RegisterScreen />
+        </Provider>
+      </MemoryRouter>
+    );
+
+    expect(wrapper.find(".auth__alert-error").text().trim()).toBe(initialState.ui.msgError);
+    expect(wrapper.find(".auth__alert-error").exists()).toBe(true);
+
+Dado que estoy en una función ese const store sólo existe dentro de ese test,pudiendole pasar otro estado inicial.Además que es lo que hay que hacer,asinto.
+
+					VIDEO 300 PRUEBAS EN EL APPROUTER
+
+Mucha gente hace mocks de las funciones de Firebase,pero nosotros recuerda que hemos creado una base de datos entera para testing,para realizar las pruebas de la manera más real posible en un ambiente controlado de pruebas.
+
+De nuevo,recuerda que si quiero evaluar con qué argumentos ha sido llamada una función tengo que hacerla mock(por ejemplo el login):
+
+import { login } from "../../../actions/authActions";
+import { AppRouter } from "../../routers/AppRouter";
+
+jest.mock("../../../actions/authActions", () => ({
+  login: jest.fn(),
+}));
+
+Fijate que tras prepara todo como FH dictamina tengo este error:
+
+  Warning: An update to AppRouter inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+
+Esto significa que ha sucedido algun cambio (el useEffect) que no está controlado.Tengo que envolver todo dentro de un act( () => {} );
+
+Fijate que puedo hacer el mock de cualquier funcion de una dependencia(hasta ahora sólo habia echo mocks de funciones propias):
+import Swal from "sweetalert2";
+
+jest.mock("sweetalert2", () => ({
+   fire: jest.fn(),
+})); 
+
+Recueda que son a nivel de archivo
+
+					VIDEO 302 PRUEBAS EN EL NOTESCREEN
+
+Recordemos que en cada cambio en el formulario se dispara el efecto, y el efecto dispara el activateNote.Por consecuencia voy a modificar cualquier control del formulario y ver con que argumentos se dispara el activateNote:
+
+  test("debe de llamar el activateNote al cambiar el formulario", async () => {
+    wrapper.find("input[name='title']").simulate("change", {
+      target: { name: "title", value: "adios" },
+    });
+    expect(activateNote).toHaveBeenCalled();
+    expect(activateNote).toHaveBeenLastCalledWith(1234, {
+      title: "adios",
+      id:1234,
+      body: "mundo",
+    });
+
+  });
+});
+Simplemente simulo el change y ojo,que se dispara dos veces,hay que usar toHaveBeenLastCalledWith.
+
+					VIDEO 303 PRUEBAS EN EL JOURNAL ENTRY
+
 

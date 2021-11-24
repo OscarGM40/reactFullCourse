@@ -1,4 +1,4 @@
-import { db } from "../components/firebase/firebase-config"
+import { db } from "../firebase/firebase-config"
 
 
 

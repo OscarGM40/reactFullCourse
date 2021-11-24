@@ -67,7 +67,7 @@ describe("Pruebas con las acciones de Auth", () => {
   });
 
   test("debe de iniciar el startLoginEmailPassword", async () => {
-    await store.dispatch(startLoginEmailPassword("test@test01.com", "123456"));
+    await store.dispatch(startLoginEmailPassword("test@test.com", "123456"));
 
     const actions = store.getActions();
     // console.log(actions);
@@ -79,7 +79,7 @@ describe("Pruebas con las acciones de Auth", () => {
     expect(actions[1]).toEqual({
       type: types.login,
       payload: {
-        uid: "CuPlgj7PYLTQ2WtQkM8HWjqrduy1",
+        uid: "zONtAeDyYBZjNs1pf9h3S9btJGp1",
         displayName: null,
       },
     });
@@ -91,7 +91,7 @@ describe("Pruebas con las acciones de Auth", () => {
 
   test("should fail the startRegisterWithEmailPasswordName", async () => {
     const action = await store.dispatch(
-      startRegisterWithEmailPasswordName("test@test01.com", "123456")
+      startRegisterWithEmailPasswordName("test@test.com", "123456")
     );
    //  console.log(action, "action");
     expect(action).toBe("auth/email-already-in-use");

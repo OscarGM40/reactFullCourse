@@ -58,4 +58,29 @@ describe("Pruebas en el RegisterScreen", () => {
       payload: "Email is not valid",
     });
   });
+
+  test('debe de mostrar la caja de alerta con el error', () => {
+    const initialState = {
+      auth: {},
+      ui: {
+        msgError: "Email is not valid",
+        loading: false,
+      },
+    };
+    const store = mockStore(initialState);
+
+    const wrapper = mount(
+      <MemoryRouter>
+        <Provider store={store}>
+          <RegisterScreen />
+        </Provider>
+      </MemoryRouter>
+    );
+
+    expect(wrapper.find(".auth__alert-error").text().trim()).toBe(initialState.ui.msgError);
+    expect(wrapper.find(".auth__alert-error").exists()).toBe(true);
+
+    
+  })
+  
 });

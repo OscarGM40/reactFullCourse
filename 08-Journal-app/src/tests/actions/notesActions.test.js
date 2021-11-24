@@ -9,7 +9,7 @@ import {
   startSaveNote,
   startUploading,
 } from "../../actions/notesActions";
-import { db } from "../../components/firebase/firebase-config";
+import { db } from "../../firebase/firebase-config";
 import { types } from "../../types/types";
 import  { fileUpload }  from "../../helpers/fileUpload";
 

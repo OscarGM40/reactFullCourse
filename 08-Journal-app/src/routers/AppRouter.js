@@ -8,7 +8,7 @@ import {
 } from "react-router-dom";
 import { JournalScreen } from "../components/journal/JournalScreen";
 import { AuthRouter } from "./AuthRouter";
-import { firebase } from "../components/firebase/firebase-config";
+import { firebase } from "../firebase/firebase-config";
 import { useDispatch } from "react-redux";
 import { login } from "../actions/authActions";
 import PublicRoute from "./PublicRoute";
@@ -24,7 +24,7 @@ export const AppRouter = () => {
   // al poner un efecto con ninguna dependencia solo se va a ejecutar una vez
   useEffect(() => {
     // regresa un firebase.unsubscribe,vamos,que crear un Observable
-    firebase.auth().onAuthStateChanged(async (user) => {
+    firebase.auth().onAuthStateChanged( (user) => {
       if (user?.uid) {
         dispatch(login(user.uid, user.displayName));
         setIsLoggedIn(true);
@@ -35,7 +35,7 @@ export const AppRouter = () => {
       setChecking(false);
     });
     // fijate que me pedia poner 'dispatch' como dependencia,pero realmente nunca va a cambiar.Puedo estar tranquilo poniendole que no redisparará el efecto
-  }, [dispatch]);
+  }, [dispatch,setIsLoggedIn,setChecking]);
 
   if (checking) {
     return <h1>Please,wait...</h1>;
