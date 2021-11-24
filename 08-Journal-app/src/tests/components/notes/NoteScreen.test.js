@@ -4,7 +4,6 @@ import { Provider } from "react-redux";
 import configureStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import { MemoryRouter } from "react-router-dom";
-import { Sidebar } from "../../../components/journal/Sidebar";
 
 import { activateNote } from "../../../actions/notesActions";
 import { NoteScreen } from "../../../components/notes/NoteScreen";
