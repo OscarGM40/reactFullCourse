@@ -1,3 +1,4 @@
+import "@testing-library/jest-dom";
 import React from "react";
 import { mount } from "enzyme";
 import { Provider } from "react-redux";
@@ -22,8 +23,8 @@ const mockStore = configureStore(middlewares);
 
 const initialState = {
   auth: {
-      uid: "123",
-      name: "John"
+    uid: "123",
+    name: "John",
   },
   ui: {
     loading: false,
@@ -31,7 +32,7 @@ const initialState = {
   },
   notes: {
     active: {
-       id:"134"
+      id: "134",
     },
     notes: [],
   },
@@ -49,7 +50,6 @@ const wrapper = mount(
 );
 
 describe("Pruebas en Sidebar", () => {
-
   beforeEach(() => {
     store = mockStore(initialState);
     store.clearActions();
@@ -60,12 +60,12 @@ describe("Pruebas en Sidebar", () => {
   });
 
   test("debe de llamar el startLogout al tocar el enlace", async () => {
-      wrapper.find("button").simulate("click");
-      expect(startLogout).toHaveBeenCalled();
+    wrapper.find("button").simulate("click");
+    expect(startLogout).toHaveBeenCalled();
   });
 
   test("debe de llamar el startNewNote al tocar el boton", async () => {
-      wrapper.find(".journal__new-entry").simulate("click");
-      expect(startNewNote).toHaveBeenCalled();
+    wrapper.find(".journal__new-entry").simulate("click");
+    expect(startNewNote).toHaveBeenCalled();
   });
 });

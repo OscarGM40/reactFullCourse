@@ -23,16 +23,20 @@ const middlewares = [thunk];
 const mockStore = configureStore(middlewares);
 
 const initialState = {
-  auth: {},
+  auth: {
+    uid: "123",
+    name: "John",
+
+  },
   ui: {
     loading: false,
     msgError: null,
   },
   notes: {
-    notes: [],
-    active: {
-      id: "1545",
-    },
+    // notes: [],
+    // active: {
+      // id: "1545",
+    // },
   },
 };
 
@@ -43,11 +47,12 @@ describe("Pruebas en el componente AppRouter", () => {
   beforeEach(() => {
     store = mockStore(initialState);
     store.clearActions();
+    store.dispatch = jest.fn();
   });
-
+  
   test("debe de llamar el login si estoy autenticado", async () => {
     let user;
-
+    
     await act( async () => {
       const userCred =  firebase
       .auth()

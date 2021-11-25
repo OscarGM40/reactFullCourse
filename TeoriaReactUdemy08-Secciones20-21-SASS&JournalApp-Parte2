@@ -720,4 +720,44 @@ Simplemente simulo el change y ojo,que se dispara dos veces,hay que usar toHaveB
 
 					VIDEO 303 PRUEBAS EN EL JOURNAL ENTRY
 
+Recuerda que cuando un componente que vaya a testear recibe argumentos simplemente los simulo,no hay más ciencia asinto:
+* El comooennte pide una nota,la creo y listo
+const nota = {
+  id: 10,
+  date: 0,
+  title: "hola",
+  body: "mundo",
+  url: "https://algunlugarl.com/foto.jpg",
+};
+const wrapper = mount(
+  <Provider store={store}>
+    <JournalEntry {...nota} />
+  </Provider>
+);
+
+Hacer el mock de una funcion me va a permitir ver cuando,cuantas veces,con qué argumentos,etc se llamó esa función:
+store.dispatch = jest.fn(); <- voy a poder ver todo lo relacionado al dispatch de redux(o del que fuera)
+En cuanto a la prueba simplemente disparamos el click y vemos que sucede en el dipatch ya que tengo su mock:
+
+
+  test("debe de activar la nota correctamente", async () => {
+
+    wrapper.find("div.journal__entry").prop("onClick")();
+    
+    expect(store.dispatch).toHaveBeenCalled();
+    expect(store.dispatch).toHaveBeenCalledWith({
+      type: types.notesActive,
+      payload: {
+        id: 10,
+        title: "hola",
+        body: "mundo",
+        date: 0,
+        url: "https://algunlugarl.com/foto.jpg",
+      },
+    }); 
+    expect(store.dispatch).toHaveBeenCalledTimes(1);
+    expect(store.dispatch).toHaveBeenCalledWith(
+      activateNote(nota.id,{...nota}));
+  });
+
 

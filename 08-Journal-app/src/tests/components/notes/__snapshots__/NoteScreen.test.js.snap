@@ -8,7 +8,7 @@ exports[`Pruebas en el NoteScreen debe de mostrarse correctamente 1`] = `
     className="notes__appbar"
   >
     <span>
-      24 de noviembre de 2021
+      25 de noviembre de 2021
     </span>
     <input
       onChange={[Function]}

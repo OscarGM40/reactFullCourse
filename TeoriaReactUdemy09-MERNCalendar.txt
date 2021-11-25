@@ -1,0 +1,22 @@
+						SECCIONES 23-24-25 MERN CALENDAR
+
+		Temas puntuales de la sección
+
+¿Qué veremos en esta sección?
+
+1- Estructura y diseño de nuestra aplicación de Calendario
+2- Uso de componentes de terceros
+3- Modals
+4- Configuración de Redux
+5- CRUD local
+6- Preparación de pantallas para futuras secciones
+7- Uso de MomentJS
+8- Manejo de fechas
+
+Esta sección es el inicio de nuestro MERN, (Mongo Express React Node), luego crearemos nuestro backend y después regresaremos a esta app para conectarla y desplegarla en producción
+
+						VIDEO 308 INICIO PROYECTO
+
+
+
+
