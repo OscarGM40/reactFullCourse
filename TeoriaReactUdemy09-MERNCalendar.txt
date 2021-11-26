@@ -17,6 +17,98 @@ Esta sección es el inicio de nuestro MERN, (Mongo Express React Node), luego cr
 
 						VIDEO 308 INICIO PROYECTO
 
+Fijate que desde la versión 6 han corregido el falso Redirect que se hacía en la v4 y v5(pues entregaba un 200).Ahora ya si se redirige desde el server en vez de entregar un html en el front y despues redirigir.
+Además han cambiado <Switch> por <Routes> y <Redirect> por <Navigate> pero no lo puedo usar más que englobado en una <Route>:
 
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+
+const AppRouter = () => {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/login" element={<LoginScreen />} />
+        <Route path="/" element={<CalendarScreen />} />
+        <Route path="*" element={<Navigate replace to="/" />} />
+      </Routes>
+    </BrowserRouter>
+  )
+}
+* Puedo poner replace={true} o simplemente replace(es un boolean).
+
+				VIDEO 309 LOGINSCREEN Y NAVBAR
+
+Copiamos el código del login+register del Gist(fijate que debo aprender a hacer estos gist) y adicionalmente creamos una navbar muy simple.
+     <button className="btn btn-outline-danger">
+        <i className="fas fa-sign-out-alt"></i>
+        <span> Salir</span>
+      </button>
+
+Fijate que queda muy bonito el icono+botón de salir.
+
+				VIDEO 310 REACT BIG CALENDAR
+
+Vamos a usar una libreria que nos proporcionará ese calendario(hay un par de tipos,otro con drag and drop):
+>npm i react-big-calendar moment
+Puedo ver su documentación aqui:
+https://jquense.github.io/react-big-calendar/examples/index.html
+
+Este calendar no es más que un simple componente que recibirá ciertas props que son obligatorias + las opcionales que se quiera:
+
+import BigCalendar from 'react-big-calendar'
+import moment from 'moment'
+
+// Setup the localizer by providing the moment (or globalize) Object
+// to the correct localizer.
+const localizer = BigCalendar.momentLocalizer(moment) // or globalizeLocalizer
+
+const MyCalendar = props => (
+  <div>
+    <BigCalendar
+      localizer={localizer}
+      events={myEventsList}
+      startAccessor="start"
+      endAccessor="end"
+    />
+  </div>
+)
+Fijate que va a usar moment para localizar el browser y el idioma del usuario.
+>npm i moment
+
+NOTA: ya no se importa por defecto,se usa destructuring.Además hay que usar un par de estilos extra porque esta con el height a 0(hay que poner la clase rbc-calendar con una altura):
+
+Creo un index.css para estilos globales a la aplicación.
+
+html,body {
+  height: 100vh;
+  width: 100vw;
+}
+
+.calendar-screen { <- esta clase para el div que englobe a <BigCalendar>
+  display: flex;
+  flex-flow: column;
+  height: 100vh;
+
+}
+
+.rbc-calendar {
+  height: 100%;
+}
+
+En cuanto a un evento debe llevar las props start y end aparte de title,desc (ver doc).
+const events = [
+  {
+    title: 'Cumpleaños del jefe',
+    start: moment().toDate(), //lo mismo que un new Date()
+    end: moment().add(2, 'hours').toDate(),
+    bgcolor: '#fafafa'
+  }
+]
+
+			VIDEO 311 CONFIGURACIONES ADICIONALES AL CALENDARIO
 
 

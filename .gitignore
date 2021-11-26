@@ -6,5 +6,6 @@
 07-heroes-app/node_modules
 08-journal-app/node_modules
 08-journal-app/.env*
+09-calendar-app/node_modules
 reduxtemplate/node_modules
 

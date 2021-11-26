@@ -760,4 +760,4 @@ En cuanto a la prueba simplemente disparamos el click y vemos que sucede en el d
       activateNote(nota.id,{...nota}));
   });
 
-
+Desplegada en : https://journal-app-redux.netlify.app/auth/login
