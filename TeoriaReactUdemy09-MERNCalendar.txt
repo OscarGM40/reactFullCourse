@@ -111,4 +111,119 @@ const events = [
 
 			VIDEO 311 CONFIGURACIONES ADICIONALES AL CALENDARIO
 
+Puedo cambiar el idioma del display del componente con la propiedad messages:
+export const messages = {
+  allDay: "Todo el día",
+  previous: "<",
+  next: ">",
+  today: "Hoy",
+  month: "Mes",
+  week: "Semana",
+  day: "Día",
+  agenda: "Agenda",
+  date: "Fecha",
+  time: "Hora",
+  event: "Evento",
+  noEventsInRange: "No hay eventos en este rango",
+  showMore: (total) => `+ Ver más (${total})`,
+};
+    <BigCalendar
+        localizer={localizer}
+        events={events}
+        startAccessor="start"
+        endAccessor="end"
+        messages={messages} <- aqui
+      />
+Aun me falta cambiar el idioma a moment:
+import 'moment/locale/es'
+moment.locale('es')
 
+Para cambiar el estilo del evento puedo hacerlo también.Será en la propiedad eventPropGetter que recibe una función que configurará ese nuevo estilo.:
+
+  const eventStyleGetter = (event,start,end,isSelected) => {
+    console.log(event,start,end,isSelected);
+  }
+  
+  return (
+    <div className="calendar-screen">
+      <Navbar />
+      <BigCalendar
+        localizer={localizer}
+        events={events}
+        startAccessor="start"
+        endAccessor="end"
+        messages={messages}
+        eventPropGetter={eventStyleGetter}
+      />
+En ese console.log veré incluso la propiedad custom que enviamos(bgcolor) aparte de end y start(que son Dates).Más adelante incluso crearemos otra llamada 'notes'.Lo importante es que lo que sea que devuelva esta función serán los estilos a aplicar.
+
+  const eventStyleGetter = (event, start, end, isSelected) => {
+    let style = {
+      backgroundColor: '#3e9edfcf',
+      borderRadius: '10px',
+      opacity: 0.8,
+      display: 'block',
+      color: 'black',
+    }
+    return {
+      style
+    }
+  }
+
+		VIDEO 312 PERSONALIZAR EL CUADRO Y DISPARAR EVENTOS DEL CALENDARIO
+
+ Vamos a crear un nuevo componente para un evento.Para pasarlo a BigCalendar hay que usar otra propiedad de la libreria llamada components.
+
+      <BigCalendar
+        localizer={localizer}
+        events={events}
+        startAccessor="start"
+        endAccessor="end"
+        messages={messages}
+        eventPropGetter={eventStyleGetter}
+        components={{ event: CalendarEvent }}
+      />
+
+Fijate que le he pasado el event(components={{event:component) asi que sólo tengo que sacarlo de las props en ese nuevo componente:
+export const CalendarEvent = ({ event }) => {
+  const { title, user } = event;
+  return (
+    <div>
+      <span>{title}</span>
+      <strong>{user.name}</strong>
+    </div>
+  )
+}
+EN cuanto a la funcionalidad la libreria ya viene con propiedades para mandarle mis custom setters para el doble click,one click ,change View,etc
+
+  const [ lastView,setLastView] = useState(localStorage.getItem('lastView') || 'month')
+  
+  // doble click en un evento de calendario
+  const onDoubleClick = (e) => {
+    console.log(e) //me devuelve todo el evento
+  }
+
+  // onSelect es al clickar en un evento una vez
+  const onSelect = (e) => {
+    console.log(e) //e me devuelve todo el evento
+  }
+// al cambiar de vista entre mes|semana|dia|agenda
+  const onViewChange = (e) => {
+    // console.log(e) // e devuelve week|day|month|agenda
+    localStorage.setItem('lastView',e)
+  }
+Ya que estamos guardamos la vista actual en el localStorage y definimos un estado local que la recupere.Se lo puedo pasar como vista en la prop view
+ 
+     <BigCalendar
+        localizer={localizer}
+        events={events}
+        startAccessor="start"
+        endAccessor="end"
+        messages={messages}
+        eventPropGetter={eventStyleGetter}
+        onDoubleClickEvent={onDoubleClick}
+        onSelectEvent={onSelect}
+        onView={onViewChange}
+        view={lastView}
+        components={{ event: CalendarEvent }}
+      />
