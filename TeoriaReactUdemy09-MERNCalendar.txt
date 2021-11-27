@@ -227,3 +227,61 @@ Ya que estamos guardamos la vista actual en el localStorage y definimos un estad
         view={lastView}
         components={{ event: CalendarEvent }}
       />
+
+				VIDEO 313 CREANDO UN MODAL SOBRE EL CALENDARIO
+
+Vamos a usar la libreria react-modal la cual es bastante popular.Fijate que nuestro modal va a tener bastante lógica en él.
+ >npm i react-modal.
+
+Ahora donde quiera usar este modal lo uso como un HighOrderComponent en el que puedo poner lo que yo quiera dentro de él (un form,una imagen,sólo texto,etc...):
+Además le puedo pasar mis estilos.Fijate que necesita algo de configuración(nada complicada) asi que lo mejor es visitar la doc de la librería.
+
+import Modal from 'react-modal';
+
+const customStyles = {
+  content: {
+    top: '50%',
+    left: '50%',
+    right: 'auto',
+    bottom: 'auto',
+    marginRight: '-50%',
+    transform: 'translate(-50%, -50%)',
+  },
+};
+
+* Hay que pasarle el 'appelement',el elemento padre de toda la app??
+Modal.setAppElement('#root') <- dado que estoy en React estoy dentro de un <div id='root')
+	
+Ahora me creo mi componente que llamará a este HOC con lo que quiera:
+
+export const CalendarModal = () => {
+  return (
+    <div>
+       <Modal
+        isOpen={true}
+        // onAfterOpen={afterOpenModal}
+        // onRequestClose={closeModal}
+        style={customStyles}
+        contentLabel="Example Modal"
+      >
+        <h1>Hola mundo desde React-Modal</h1>
+        <hr />
+        <span>ESto es un span cara de pan</span>
+      </Modal>
+    </div>
+  )
+}
+Lógicamente queda toda la lógica pero isOpen será un useState(boolean),onAfterOpen es para poner efectos como fadeIn y onRequestClose para cuando se cierra.
+Vamos a configurar un par de clases en el index.css y pasarselas
+      <Modal
+        isOpen={isOpen}
+        onRequestClose={closeModal}
+        style={customStyles}
+        closeTimeoutMS={200}
+        className="modal"
+        overlayClassName="modal-fondo"
+      >
+Fijate que me permite pasarle una clase('modal' en este caso) para cuando esté viendose el modal y otra para cuando esté oculto(propiedad overlayClassName) además del tiempo para cerrarse(propiedad closeTimeoutMS).
+Con un poco más de trabajo podría crear un buen modal,aunque luce bastante bien para un estilo sobrio.
+
+
