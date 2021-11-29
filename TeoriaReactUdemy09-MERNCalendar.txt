@@ -367,4 +367,186 @@ Podria pasarle un file,lo que rescate de un select,... esto es sólo el estado f
 
 				VIDEO 316 VALIDACIONES DEL FORMULARIO
 
+Para comparar fechas es más fácil trabajarlas con moment.Fijate que debería tratar de hacer algun buen tutorial sobre esta libreria:
+
+NOTA: una instancia de moment es un objeto grande,con muchas propiedades:
+
+console.log(momentStart);
+console.log(momentEnd);
+_d: Mon Nov 29 2021 16:00:00 GMT+0100 (hora estándar de Europa central) {}
+_i: Mon Nov 29 2021 16:00:00 GMT+0100 (hora estándar de Europa central) {}
+_isAMomentObject: true
+_isUTC: false
+_isValid: true
+_locale: Locale {_calendar: {…}, _longDateFormat: {…}, _invalidDate: 'Fecha inválida', _ordinal: '%dº', _dayOfMonthOrdinalParse: /\d{1,2}º/, …}
+_pf: {empty: false, unusedTokens: Array(0), unusedInput: Array(0), overflow: -2, charsLeftOver: 0, …}
+
+Pero si le paso el método toDate() pasa a ser una Date de Javascript:
+
+console.log(momentStart.toDate());
+console.log(momentEnd.toDate());
+Mon Nov 29 2021 15:00:00 GMT+0100 (hora estándar de Europa central)
+Mon Nov 29 2021 16:00:00 GMT+0100 (hora estándar de Europa central)
+ 
+De igual forma puedo usar el método moment(JSDate) para pasar una instancia de Date de JS a una instancia de moment(es como JSOn.parse y JSON.stringify):
+
+const momentStart = moment(start);
+const momentEnd = moment(end);
+
+Asi que con estos dos métodos paso de JS a moment y viceversa.Como es mucho más fácil comparar instancias de moment que de Date pasamos start y end a instancias de moment. 
+
+   if (momentStart.isSameOrAfter(momentEnd)) {
+      console.log('La fecha inicial debe ser menor que la final')
+      return;
+    }
+* Para comparar tengo isAfter,isBefore,isSameOrAfter,isBeforeOrAfter,...
+Lógicamente,el usuario necesita feedback de lo que ha sucedido asi que vamos a usar Sweetalert.
+NOTA:nada me impide retornar el Swal.fire,dado que debo hacer un return y un Swal.fire puedo combinarlo:
+
+ if (momentStart.isSameOrAfter(momentEnd)) {
+      return Swal.fire({
+        title: 'Error',
+        text: 'La fecha final debe ser mayor que la inicial',
+        icon: 'error',
+        confirmButtonText: 'Ok'
+      })
+Fijate que es lo mismo que Swal.fire() + return,va a salirse y además con el Swal.fire.Perfecto.
+
+Lo mismo podría hacer para evaluar el input para el title del evento,pero como es un input lo podemos hacer con bootstrap en vez de Swal y asi vemos dos formas.
+* Habrá que usar otro estado local
+const [ titleValid,setTitleValid] = useState(true);
+* De nuevo fijate como combino la funcionalidad de un return con un setter:
+ if(title.trim().length < 2){
+      return setTitleValid(false);
+    }
+Nada me impide retornar el setter,saliendome de la funcion padre de este if.
+
+
+			VIDEO 317 INSTALACION Y CONFIGURACION DE REDUX
+
+Si bien podemos usar el Context de React vamos a usar Redux de nuevo.Vamos a instalar redux, react-redux, y thunk(redux-thunk) para asincronia.
+>npm i redux react-redux redux-thunk
+Creo los folders tipicos(types,actions,reducers,store).Empiezo con los types que es lo más fácil:
+export const types = {
+  uiOpenModal:'[ui] Open modal',
+  uiCloseModal:'[ui] Close modal',
+}
+
+El primer reducer de momento es sólo para el modal,muy simple:
+
+const initialState = {
+  modalOpen: false,
+};
+
+export const uiReducer = (state = initialState, action) => {  
+  switch (action.type) {
+    case types.uiOpenModal:
+      return {
+        ...state,
+        modalOpen: true,
+      };
+    case types.uiCloseModal:
+      return {
+        ...state,
+        modalOpen: false,
+      };
+    default:
+      return state;
+  }
+}
+
+Fijate que Fernando va a crear un file rootReducer para combinar todos los reducers.Es una gran idea ya que realmente es otro reducer(luego está bien ubicado en le folder reducers) y además deja claro lo que hará:
+
+import { combineReducers } from 'redux';
+import { uiReducer } from './uiReducer';
+
+export const rootReducer = combineReducers({
+  ui: uiReducer,
+  // TODO AuthReducer
+  // TODO CalendarReducer
+});
+Usaremos tres en esta app,ya los agregaré.Perfecto,crearé el store.js:
+
+import { createStore, applyMiddleware,compose } from 'redux';
+import thunk from 'redux-thunk';
+import { rootReducer } from '../reducers/rootReducer';
+
+// si existen las herramientas para redux en mis DevTools las va a configurar,si no pues no hace nada ya que no existen :D
+const composeEnhancers = (typeof window !== 'undefined' && window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__) || compose;
+
+// createStore necesita un reducer como primer arg,logicamente será la combinación de todos ellos.
+export const store  = createStore(
+  rootReducer,
+  composeEnhancers(applyMiddleware(thunk))
+)
+Fijate que queda mucho más claro para mi esta forma,sacando el rootReducer a otro lado.Por último proveo a mi App de este store en un punto alto:
+
+import { Provider } from "react-redux";
+import { store } from "./store/store";
+
+import AppRouter from "./routers/AppRouter"
+
+const CalendarApp = () => {
+  return (
+    <Provider store={store}>
+      <AppRouter />
+    </Provider>
+  )
+}
+Como puedo ver es realmente sencillo usar redux.
+
+			VIDEO 318 MOSTRAR Y OCULTAR MODAL EN BASE AL STORE
+
+Fijate que se me olvidaron las actions,son importantes porque me permiten meter en una función cuanta funcionalidad desee para una acción:
+
+* en vez de poner el tipo,el payload,etc en el dispatch...
+ dispatch({type:types.uiOpenModal}) <- en vez de disparar esto
+* simplemente llamo a una acción.Ya desarrollaré la lógica en ella
+ dispatch(uiOpenModal())
+
+En las actions si que desarrollo cualquier lógica necesaria:
+
+export const uiOpenModal = () => ({
+  type: types.uiOpenModal,
+});
+
+export const uiCloseModal = () => ({
+  type: types.uiCloseModal,
+});
+Puedo observar que realmente son necesarias,en cuanto haya un poco de lógica las actions son 100% necesarias.
+
+NOTA: el equipo de Redux creó una librería que reduce la cantidad de código necesario y la complejidad de Redux(esta librería es Redux-toolkit).Es la que usa lama
+
+		VIDEO 319 CALENDARREDUCER Y PRIMERAS ACCIONES CON LOS EVENTOS
+
+De momento creamos dos nuevos tipos y acciones:
+
+export const setActiveEvent = (event) => ({
+  type: types.eventSetActive,
+  payload: event
+})
+
+export const eventAddNew = (event) => ({
+  type: types.eventAddNew,
+  payload: event
+})
+En el click del evento simplemente llamamos a la action setActiveEvent
+
+Adicionalmente vamos a crear un fab(floating action button) que abra el modal también.No puede ser más fácil:
+
+export const AddNewFab = () => {
+  const dispatch = useDispatch()
+
+  const openModal = () => {
+    dispatch(uiOpenModal())
+  }
+
+  return (
+    <button className="btn btn-primary fab"
+    onClick={openModal}>
+      <i className="fas fa-plus"></i>
+    </button>
+  )
+}
+En los estilos lo pongo en fixed y right y bottom a 25px siempre va a quedar alli.Como icono tenia el +,le subo un poco la fuente le doy un padding y border-radius a 50%.
 

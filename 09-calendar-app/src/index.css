@@ -65,3 +65,17 @@ html,body {
 .react-datetime-picker__wrapper {
     border: 0px solid gray !important;
 }
+
+/* FAB o Floating Action Button */
+.fab {
+    border-radius: 50%;
+    font-size: 22px;
+    padding: 25px;
+    position: fixed;
+    bottom: 25px;
+    right: 25px;
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

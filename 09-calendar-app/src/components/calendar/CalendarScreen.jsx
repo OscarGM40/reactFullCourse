@@ -9,6 +9,10 @@ import 'moment/locale/es'
 import { CalendarEvent } from './CalendarEvent'
 import { useState } from 'react'
 import { CalendarModal } from './CalendarModal'
+import { useDispatch } from 'react-redux'
+import { uiOpenModal } from '../../actions/uiActions'
+import { eventSetActive } from '../../actions/eventActions'
+import { AddNewFab } from '../ui/AddNewFab'
 moment.locale('es')
 
 // Setup the localizer by providing the moment Object
@@ -36,16 +40,19 @@ const events = [
 
 const CalendarScreen = () => {
 
+  const dispatch = useDispatch();
+
   const [lastView, setLastView] = useState(localStorage.getItem('lastView') || 'month')
 
   // doble click en un evento de calendario
   const onDoubleClick = (e) => {
-    console.log(e) //me devuelve todo el evento
+    dispatch(uiOpenModal())
   }
 
   // onSelect es al clickar en un evento una vez
   const onSelect = (e) => {
-    console.log(e) //e me devuelve todo el evento
+    dispatch(eventSetActive(e));
+    dispatch(uiOpenModal());
   }
   
   // al cambiar de vista entre mes|semana|dia|agenda
@@ -85,9 +92,8 @@ const CalendarScreen = () => {
         view={lastView}
         components={{ event: CalendarEvent }}
       />
-
+      <AddNewFab />
       <CalendarModal / >
-      
     </div>
   )
 }
