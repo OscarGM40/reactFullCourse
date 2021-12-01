@@ -9,10 +9,11 @@ import 'moment/locale/es'
 import { CalendarEvent } from './CalendarEvent'
 import { useState } from 'react'
 import { CalendarModal } from './CalendarModal'
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { uiOpenModal } from '../../actions/uiActions'
-import { eventSetActive } from '../../actions/eventActions'
+import { eventClearActiveEvent, eventSetActive } from '../../actions/eventActions'
 import { AddNewFab } from '../ui/AddNewFab'
+import { DeleteEventFab } from '../ui/DeleteEventFab'
 moment.locale('es')
 
 // Setup the localizer by providing the moment Object
@@ -23,7 +24,7 @@ const localizer = momentLocalizer(moment)
 // los eventos tienen que tener ciertas caracteristicas para que BigCalendar los pueda interpretar.Serán un arreglo de objetos por motivos obvios.
 
 // Es obligatorio poner fecha de inicio y de fin con start y end,pero también puedo mandarle propiedades inventadas,como el bgcolor.
-const events = [
+/* const events = [
   {
     title: 'Cumpleaños del jefe',
     start: moment().toDate(), //lo mismo que un new Date()
@@ -35,10 +36,12 @@ const events = [
       name: 'Oscar',
     }
   }
-]
+] */
 
 
 const CalendarScreen = () => {
+
+  const { events,activeEvent } = useSelector(state => state.calendar)
 
   const dispatch = useDispatch();
 
@@ -52,16 +55,18 @@ const CalendarScreen = () => {
   // onSelect es al clickar en un evento una vez
   const onSelect = (e) => {
     dispatch(eventSetActive(e));
-    dispatch(uiOpenModal());
   }
   
-  // al cambiar de vista entre mes|semana|dia|agenda
+  // al cambiar de vista  e===mes|semana|dia|agenda
   const onViewChange = (e) => {
-    // console.log(e) // e devuelve week|day|month|agenda
     setLastView(e);
     localStorage.setItem('lastView', e);
   }
 
+  const onSelectSlot = (e) => {
+    dispatch(eventClearActiveEvent());
+  }
+  
   const eventStyleGetter = (event, start, end, isSelected) => {
     let style = {
       backgroundColor: '#3e9edfcf',
@@ -89,11 +94,14 @@ const CalendarScreen = () => {
         onDoubleClickEvent={onDoubleClick}
         onSelectEvent={onSelect}
         onView={onViewChange}
+        onSelectSlot={onSelectSlot}
+        selectable={true}
         view={lastView}
         components={{ event: CalendarEvent }}
       />
       <AddNewFab />
-      <CalendarModal / >
+      { !!activeEvent && <DeleteEventFab /> }
+      <CalendarModal />
     </div>
   )
 }

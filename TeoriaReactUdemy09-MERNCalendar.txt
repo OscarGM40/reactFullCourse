@@ -550,3 +550,138 @@ export const AddNewFab = () => {
 }
 En los estilos lo pongo en fixed y right y bottom a 25px siempre va a quedar alli.Como icono tenia el +,le subo un poco la fuente le doy un padding y border-radius a 50%.
 
+					VIDEO 320 AÑADIR UN NUEVO EVENTO
+
+Realmente faltan muchas cosas como guardar este nuevo evento en una DB ,pero ya podemos hacerlo en local con redux:
+  case types.eventAddNew:
+      return {
+        ...state,
+        events: [...state.events, action.payload],
+      };
+
+NOTA: Fernando recomienda siempre pasar una copia cuando se trate de un objeto.
+En el dispatch de esta acción le mandaremos varias cosas que aún no tenemos pero lucirá asi un new Event:
+    dispatch(eventAddNew({
+      ...formValues,
+      id: new Date().getTime(),
+      user:{
+        _id: '123',
+        name: 'Juan',
+      }
+    }));
+
+				VIDEO 321 MOSTRAR EVENTOS EN EL CALENDARIO
+
+Realmente solo hay que usar useSelector(state => state.calendar.events) para mostrarlos.
+NOTA: Fijate que al cerrar el modal tengo que resetear el form a un valor por defecto.Ese initialState es mejor declararlo fuera del componente:
+  const closeModal = () => {
+    dispatch(uiCloseModal());
+    setFormValues(initEvent); <- initEvent es mejor sacarlo fuera del componente,para que sólo se cree una vez en vez de tropecientas(aunque se crearían con el mismo valor,estoy creando instancias)Grande Fernando.
+	
+Por último quiero que al hacer un single click se carge en el formulario el activeEvent.Es más sencillo de lo que parece.Solo hay que usar un efecto que se re-disparará cada vez que cambie el activeEvent.En cuanto no sea null debo cargar el form con estos values:
+const { activeEvent} = useSelector(state => state.calendar);
+
+  /* NOTA puedo comprobar por si no es null en un efecto.Incluso por si no es undefined.Lógicamente llevará esa propiedad como dependencia */
+  useEffect(() => {
+    if(activeEvent){
+      setFormValues(activeEvent)
+    }
+  },[activeEvent]);
+En cuanto ese objeto que estoy vigilando no sea null o undefined disparará el códdigo del if.Amazing.
+
+Fijate que tenemos un pequeño fallo ya que el modal limpia el formulario pero deja la nota activa.Hay que ponerla a null para que cambie y dispare el efecto:
+
+  case types.eventClearActiveEvent:
+      return {
+        ...state,
+        activeEvent: null,
+      };
+
+				VIDEO 322 EDITAR EL EVENTO ACTIVO
+
+Fijate que lo mejor es iterar con un map y aplicar un ternario o un filter para actualizar en redux:
+
+    case types.eventUpdate:
+      return {
+        ...state,
+        events: state.events.map((event) =>
+          event.id === action.payload.id 
+            ? action.payload 
+            : event
+        ),
+      };
+Obviamente hay que crear el type y la action,pero son muy sencillas.Lo más complicado será saber cuando hay que llamar al actualizar y cuando al new.Para esto vamos a usar la existencia del campo id como condición.
+
+*Si el activeEvent está en null estoy creando uno,si está definido estoy editando
+    if (activeEvent) {
+      dispatch(eventUpdate(formValues))
+    } else {
+      dispatch(eventAddNew({
+        ...formValues,
+        id: new Date().getTime(),
+        user: {
+          _id: '123',
+          name: 'Juan',
+        }
+      }));
+    }
+
+					VIDEO 323 ELIMINAR EVENTO
+
+Realmente va a ser muy sencillo,ya que vamos a borrar la nota activa.Si no hay ninguna nota activa no aparecerá el botón de borrar.
+NOTA:para ir del tmux al ide son dos clicks.Para ir del tmux o ide al navegador es uno.Debo recordar cual es mi última posición,si el tmux o el ide.
+
+Fijate que la action no va a recibir un payload:
+  case types.eventDelete:
+      return {
+        ...state,
+        events: state.events.filter(
+          event => event.id !== state.activeEvent.id),
+        activeEvent: null,
+      };
+El botón se mostrará condicionalmente:
+
+export const DeleteEventFab = () => {
+  return (
+    <button className="btn btn-danger fab-danger">
+      <i className="fas fa-trash"></i>
+      <span>Borrar evento</span>
+    </button>
+  )
+}
+
+Fijate que puedo pasar cualquier valor a booleano:
+{ !!activeEvent && <DeleteEventFab /> }
+Aunque ya se iba a resolver si no esta undefined a true.
+
+NOTA: esta libreria react-big-calendar trae muchas funciones.Hay una muy interesante que es onSelectSlot(la cual requiere de la propiedad selectable={true}).Cuando haga click en una slot me dará información sobre esa ranura.
+Fijate que podría usarla para introducir las fechas automáticamente,ya que me va a dar siempre las fechas de inicio y fin de esa ranura
+En la siguiente sección crearemos un backend funcional.
+
+					SECCION 24 CALENDAR APP BACKEND
+
+¿Qué veremos en esta sección?
+
+1- Node Express Mongoose Modelos 
+2- Controllers
+3- Middlewares de Express
+4- JWT
+5- Autenticación pasiva
+6- Payloads
+7-  Encriptación
+8- Rutas
+9- CORS
+10- Revalidar tokens
+11- MongoDB & MongoAtlas & MongoCompass
+
+Es una sección bastante pesada en el aspecto de que no es React lo que veremos, pero todo lo haremos con JavaScript, y ya debemos de estar familiarizados con él.
+
+El backend que haremos aquí es robusto y lo podrían utilizar en proyectos reales, espero que lo aprovechen y sobre todo aprendan bastante.
+
+Si quieren saber más sobre Node, recuerden que tengo un curso especializado en ese tema.
+
+				VIDEO 328 CALENDAR APP BACKEND - INICIO
+
+
+
+
