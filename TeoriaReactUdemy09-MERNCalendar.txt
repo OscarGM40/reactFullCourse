@@ -682,6 +682,35 @@ Si quieren saber más sobre Node, recuerden que tengo un curso especializado en 
 
 				VIDEO 328 CALENDAR APP BACKEND - INICIO
 
+NOTA: express está por sacar la versión 5.Esto podría dar problemas.Recuerda que puedo instalar una versión en concreto con npm i paquete@version:
 
+>npm i express@4.17.1 <- la que está en este momento vigente
 
+Fijate que en NOde sólo se usa el .env,a diferencia de en el front que puedo y debo usar varios tipos de .env
+
+Vamos a crear un directorio público donde serviremos nuestra aplicación Angular.
+app.use(express.static('public').
+Recuerda que puedo usar varias approach:
+app.use("/",express.static(path.join(__dirname,'public');
+app.use(express.static(path.join(__dirname, './public')));
+
+Siempre que apunte bien a la carpeta puedo usar la que quiera
+
+NOTA:recuerda que  no puedo responder dos veces en un controlador.Me dará el error ERR_HTTP_HEADERS_SENT.Cannot set headers after they are sent.ESto es por haber usado dos res.json o res.sendFile + res.json | res.send | res.download.
+
+Por ejemplo este código puede disparar esto:
+exports.crearUsuario = (req = request, res = response) => {
+  const { name, email, password } = req.body;
+
+  if(name.length <= 5) {
+    res.status(400).json({
+      ok: false,
+      msg: 'El nombre debe tener al menos 5 caracteres'
+    });
+
+  res.json({
+    ok: true,
+  });
+};
+La solución es terminar con un return res.json,por ejemplo.
 
