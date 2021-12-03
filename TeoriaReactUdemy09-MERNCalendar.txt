@@ -714,3 +714,54 @@ exports.crearUsuario = (req = request, res = response) => {
 };
 La solución es terminar con un return res.json,por ejemplo.
 
+					VIDEO 334 EXPRESS-VALIDATOR
+
+NOTA:fijate que isEmail() ya me comprueba que venga algo(pues si no viene nada no es un email.Como siempre lo mejor es crear un customMiddleware para no ir de controlador en controlador imprimiendo los errores:
+
+const { request, response } = require('express');
+const { validationResult } = require('express-validator');
+
+const validarCampos = (req=request, res=response, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({
+      ok: false,
+      errors: errors.mapped()
+    });
+  }
+};
+
+module.exports = {
+  validarCampos
+ };
+
+			VIDEO 336 CONFIGURACION DE LA BASE DE DATOS MONGO-ATLAS
+
+Realmente es muy sencillo ya en la version 6.Recuerda que es mejor crear una carppeta para gestionar las conexiones a DBs.
+
+const dbConnection = async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URI);
+    console.log("MongoDB Connected to: " + mongoose.connection.name);
+  } catch (error) {
+    console.log(error);
+  }
+};
+module.exports = { dbConnection };
+
+				VIDEO 338 CREAR UN USUARIO EN LA DB REMOTA
+
+NOTA:fijate que en express-validator puedo agregar custom validations que hagan peticiones:
+
+  check('email', 'El email es obligatorio').isEmail()
+     .custom(async value => {
+        const emailCheck = await getUserByEmail(value);
+        if (!!emailCheck) 
+           return Promise.reject();  <- con el reject lo veo por consolo con un throw new Error no lo veo por consola ni cae la app.Cuestión de gustos.
+        }).withMessage('Email ya se encuentra registrado'),
+
+De esta forma lo compruebo desde el middleware,que se ejecuta justo antes del controlador.Sea como sea uno de los dos tendrá que mirar por si existe el email y hacer una petición.
+
+				VIDEO 339 ENCRIPTAR LA CONTRASEÑA
+
+

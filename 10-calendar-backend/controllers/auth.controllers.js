@@ -1,21 +1,41 @@
 const { response, request } = require("express");
+const Usuario = require("../models/Usuario");
 
 
-exports.crearUsuario = (req = request, res = response) => {
+exports.crearUsuario = async (req = request, res = response) => {
   const { name, email, password } = req.body;
 
-  if(name.length <= 5) {
-    res.status(400).json({
+  try {
+    // revisar si existe el usuario
+    let usuario = await Usuario.findOne({ email });
+
+    if (usuario) {
+      return res.status(400).json({
+        ok: false,
+        msg: "El usuario ya existe",
+      });
+    }
+
+    usuario = new Usuario(req.body)
+    await usuario.save();
+
+    res.status(201).json({
+      ok: true,
+      uid:usuario.id,
+      name:usuario.name
+    });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
       ok: false,
-      msg: 'El nombre debe tener al menos 5 caracteres'
+      msg: "Error inesperado",
     });
   }
-  res.json({
-    ok: true,
-  });
-};
+}; 
 
-exports.loginUsuario = (req = request, res = response) => {
+
+exports.loginUsuario = async (req = request, res = response) => {
   const { email, password } = req.body;
 
   res.json({
@@ -23,7 +43,7 @@ exports.loginUsuario = (req = request, res = response) => {
   });
 };
 
-exports.revalidarToken = (req = request, res = response) => {
+exports.revalidarToken = async (req = request, res = response) => {
   res.json({
     ok: true,
   });
