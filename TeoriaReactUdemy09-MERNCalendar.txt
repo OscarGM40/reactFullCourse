@@ -764,4 +764,116 @@ De esta forma lo compruebo desde el middleware,que se ejecuta justo antes del co
 
 				VIDEO 339 ENCRIPTAR LA CONTRASEÑA
 
+No va a ser posible recuperar una contraseña que se encripte con un hash de una sola vía.NO es nada complicado,ya existe la libreria bcryptjs(escrita en JS) y bcrypt(escrita en C++,por lo que es más rápida) que se encarga de todo:
+>npm i bcrypt | bcryptjs
+NOTA:parece mejor opción instalar bcrypts por ser un 20-30% mas rápida.
+ 
+const bcrypt = require("bcrypt")
+const salt = bcrypt.genSaltSync(10) <- por defecto es 10 también
+usuario.password = bcrypt.hashSync(password, 10);
+
+Fijate que usamos todo sincrono,aunque podemos usar promesas.Hay una recomendación al respecto:
+Why is async mode recommended over sync mode?
+If you are using bcrypt on a simple script, using the sync mode is perfectly fine. However, if you are using bcrypt on a server, the async mode is recommended. This is because the hashing done by bcrypt is CPU intensive, so the sync version will block the event loop and prevent your application from servicing any other inbound requests or events. The async version uses a thread pool which does not block the main event loop.
+Si es para un server mejor asincrono para que libere el event loop.
+
+					VIDEO 341 LOGIN DE USUARIO
+
+Ya tenemos la manera de encriptar una password,ahora necesitamos una forma para comprobarlas.Dado que estamos con un hash de una sola via,el método compare realmente va a comprobar si haría match la contraseña en texto plano tras encriptarla con la ya encriptada.
+
+bcrypt.compareSync(password, usuario.password); <- recuerda que estamos haciendo todo síncrono
+
+				VIDEO 342 GENERAR UN JSON WEB TOKEN
+
+Queremos autenticar tanto en el register como en el login.Permiten manejar el estado de la sesión del usuario de forma pasiva.
+Un token tiene tres partes,header,body y signature.
+El header especifica el algoritmo de encriptación y el tipo(un json web token en nuestro caso,hay varios tipos de token).
+El body contiene el payload(no se guarda información sensible).
+Fijate que exponer un id no es nada importante
+En la firma del token habrá una palabra secreta para comprobar que el server pueda comprobar que el token que viene del frontend es válido.
+
+NOTA:con lo anterior en mente fijate la importancia de crear una signature fuerte,porque si la cogen pueden firmar tokens válidos:
+JWT_SECRET=merncalendarappwithreduxandjwt <- supongo que simbolos y números aún mejor
+
+En cuanto a la libreria jsonwebtoken aún no trabaja con promesas,asi que hay que hacer un pequeño apaño:
+
+const generarJWT = (uid,name) => {
+    return new Promise((resolve, reject) => {
+        const payload = { uid,name };
+
+        jwt.sign(payload, process.env.JWT_SECRET, {
+            expiresIn: '2h'
+        }, (err, token) => {
+            if (err) {
+                reject('Error generando el token');
+            } else {
+                resolve(token);
+            }
+        });
+    });
+} 
+Como argumentos los que yo quiera.
+
+						VIDEO 343 REVALIDAR TOKEN 
+
+Si quiero revalidar un token tengo que asegurarme,claro está,que el primer token sea válido(id del usuario,exp válido).
+
+El objetivo es seguir generando tokens válidos mientras el usuario siga usando la aplicación.Lo que haremos será crear un endpoint al que si se llama devuelve otro jwt que sustituye el jwt actual.
+
+Usualmente es un standar que cuando cree un header personalizado le dé un nombre que empieza por x-, asi que usaremos x-token para mandar el token en el header.
+
+Para rescatarlo puedo usar req.header('x-token') o req.headers['x-token'];
+
+exports.validarJWT = (req, res= response, next) => {
+    const token = req.headers['x-token'];
+
+     if (token) {
+        jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+            if (err) {
+                return res.status(401).json({
+                    ok: false,
+                    mensaje: 'Token proveido no válido',
+                    errors: err
+                });
+            }
+            req.uid = decoded.uid;
+            req.name = decoded.name;
+            next();
+        });
+    } else {
+        return res.status(401).json({
+            ok: false,
+            mensaje: 'Token no proveído',
+            errors: { message: 'No token provided' }
+        });
+    }
+}
+
+NOTA: si la integridad de la aplicación fuera comprometida cambiar el SECRET para la signature inhabilitaría todos los tokens existentes.
+
+			VIDEO 345 CONFIGURAR CORS
+
+Dado que esto será una API,una aplicación de programación a la cual cualquier persona del mundo podrá hacer peticiones.
+Con el CORS puedo configurar esto(podría restringir dominios,IPs,...)
+NO es infalible,pero añade una capa de seguridad.
+Incluso puedo habilitar las CORS sólo para un endpoint.Sin embargo haremos una configuración básica del CORS.
+
+const cors = require('cors')
+app.use(cors()) 
+
+No hay mucho más que configurar por ahora.Recuerda que POSTMAN engaña al backend haciendo creer que la petición ha salido del mismo servidor cuando no es así.
+
+				SECCION 25 BACKEND-EVENTOS DEL CALENDARIO
+
+¿Qué veremos en esta sección?
+
+1- CRUD completo de eventos de calendario
+2- Modelos
+3- Validaciones automáticas
+4- Validaciones personalizadas
+
+Aquí trabajaremos creando todo lo necesario para que podamos insertar, actualiza y eliminar información relacionada a los eventos que nuestra aplicación del calendario necesitará.
+
+					VIDEO 348 CONTINUACION PROYECTO
+
 

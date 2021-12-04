@@ -5,9 +5,10 @@ const {
   revalidarToken,
 } = require("../controllers/auth.controllers");
 
-const { check } = require("express-validator");
+const { check,header } = require("express-validator");
 const { validarCampos } = require("../middlewares/validarCampos");
 const Usuario = require("../models/Usuario");
+const { validarJWT } = require("../middlewares/validarJWT");
 
 router.post(
   "/new",
@@ -60,7 +61,10 @@ router.post(
 
 router.get(
   "/renew",
-  [check("token", "El token es obligatorio").not().isEmpty(), validarCampos],
+  [
+    validarJWT,
+    header("x-token", "El token es obligatorio").not().isEmpty(), validarCampos
+  ],
   revalidarToken
 );
 
