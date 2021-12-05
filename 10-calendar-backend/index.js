@@ -16,6 +16,7 @@ app.use("/",express.static('public'));
 
 /*  Rutas */
 app.use('/api/auth',require('./routes/auth.routes'));
+app.use('/api/events',require('./routes/events.routes'));
 
 
 /* Ejecutar servidor web */

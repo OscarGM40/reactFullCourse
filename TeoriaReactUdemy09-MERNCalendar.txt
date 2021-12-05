@@ -876,4 +876,100 @@ Aquí trabajaremos creando todo lo necesario para que podamos insertar, actualiz
 
 					VIDEO 348 CONTINUACION PROYECTO
 
+NOTA: i.e and e.g are both from 'latin'.First stands for 'id est'(es decir).SEcond one means 'example gratia' and is alike 'for example'.
+Fijate que cuando sepa que todas las rutas van a usar un middleware lo puedo subir de nivel para no tener que declararlo en cada una de ellas:
 
+router.use(validarJWT) <- todas las rutas van a implementarlo
+router.get("/",  getEventos);
+
+router.post("/", crearEvento);
+
+Podria mover la primera linea si por ejemplo el get fuera publico y las otras tres no:
+router.get("/",  getEventos); <- esta no lo implementa
+router.use(validarJWT) <- desde aqui hacia abajo todas lo implementan
+router.post("/", crearEvento);
+router.put("/", updateEvento);
+
+					VIDEO 350 MODELO PARA EVENTO
+
+Creo el modelo que define un evento.Fijate que ref lleva como valor el nombre del Schema(lo puedo ver en mongoose.model('Usuario',...):
+
+const eventoSchema = new mongoose.Schema({
+  title:{type:String, required:true},
+  notes:{type:String},
+  start:{type:Date, required:true},
+  end:{type:Date, required:true},
+  /* fijate que se referencia el nombre del otro schema */
+  user:{type:mongoose.Schema.Types.ObjectId, ref:'Usuario'}
+},{
+  timestamps:true,
+  collection:'eventos',
+  toJSON:{
+    transform:(doc, ret) => {
+      ret.id = ret._id;
+      delete ret._id;
+      delete ret.__v;
+    }
+  }
+});
+
+eventoSchema.set('versionKey', 'version');
+
+module.exports = mongoose.model('Evento',eventoSchema);
+
+NOTA: 0 es un valor válido para una fecha.Cogerá el momento 0(1 del 1 de 1970).
+Realizar varias validaciones asegura la calidad de la información que estoy mandando.
+
+				VIDEO 351 VALIDAR CAMPOS NECESARIOS
+
+Nuestro modelo Evento lleva varios campos obligatorios.Debo validar que vengan en el body de la request.
+NOTA:express-validator tiene funciones como isDate para validar si es una fecha válida de JS o isStrongPassword(investigar sobre esta).
+
+Sin embargo vamos a crearnos nuestra propia funcion validadora y agregarla a las validaciones,asi aprendo como hacer una validación custom
+Usaremos moment en esta función:
+npm i moment
+
+* LA funcion para el custom(value) tiene que devolver true o false.
+
+exports.isDate = (value,{ req, location, path }) => {
+  if(!value){
+    return false;
+  }
+  const fecha = moment(value);
+  if(fecha.isValid()){
+    return true;
+  } else {  
+    return false;
+  }
+NOTA: hay validadores para varias zonas:
+checkBodyAndQuery('id').isUUID(), <- en uno de los dos debe venir
+
+				VIDEO 353 OBTENER TODOS LOS EVENTOS
+
+Fijate como puedo sacar el id de un ref.Necesito el toString():
+
+  if(evento.user.toString() !== req.uid){
+      return res.status(401).json({
+        ok: false,
+        msg: "no autorizado",
+      });
+    }
+
+Recuerda que estoy en una aplicación donde el usuario sólo puede editar o eliminar sus propios eventos:
+
+     if (evento.user.toString() !== req.uid) {
+        return res.status(401).json({
+          ok: false,
+          msg: "no autorizado para eliminar este evento",
+        });
+      }
+			SECCION 26 DESPLEGAR BACKEND EN HEROKU
+
+¿Qué veremos en esta sección?
+
+1- Despliegues de Node hacia Heroku
+2- Git
+3- Generar nuestra aplicación de React para producción
+4- Revisar LOGS de Heroku
+
+Es una sección corta pero enfocada en que puedan desplegar todo su trabajo en un hosting que les permita compartir todo su trabajo a cualquier persona y usar su aplicación en cualquier lugar del mundo.
