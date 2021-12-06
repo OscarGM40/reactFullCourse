@@ -20,10 +20,9 @@ app.use('/api/events',require('./routes/events.routes'));
 
 
 /* Ejecutar servidor web */
-const port = process.env.PORT || 4000;
-app.listen(port, () => {
+app.listen(process.env.PORT, () => {
   console.clear();
-  console.log(`Servidor web iniciado en el puerto ${port}`);
+  console.log(`Servidor web iniciado en el puerto ${process.env.PORT}`);
 });
 
 
