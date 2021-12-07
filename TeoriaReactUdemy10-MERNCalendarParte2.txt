@@ -1,0 +1,85 @@
+					SECCION 27 MERN CALENDAR + BACKEND
+
+¿Qué veremos en esta sección?
+
+1- Conexión de nuestro Backend con el Frontend
+
+Esta sección trabajaremos integrando nuestro backend con el frontend hecho en React, que ya tenemos casi terminado, sólo debemos de llamar los servicios y dispara las acciones respectivas que ya tenemos en nuestra aplicación del calendario.
+
+Toda esta sección está enfocada en la parte de la autenticación y manejo del JWT, hay que guardar y estar actualizando el token de autenticación y realizar las pruebas respectivas!
+
+Estamos llegando al final del curso :'(... pero aún falta mucho :D
+
+					VIDEO 364 CREANDO LOS .ENV
+
+Debo acostumbrarme a crear un .env.development y un .env.production.En el primero
+ REACT_APP_API_URL="http://localhost:8090"
+Y en el segundo al backend de prod
+ REACT_APP_API_URL="https://calendar-mern-server.herokuapp.com"
+Recuerda que para los cambios en un .env hay que volver a levantar la aplicación.
+
+					VIDEO 365 DISPARAR LOGIN
+
+Vamos a usar nuestro customHooks.Enlazo el formulario con el hook y creo esta acción asincrona,que disparamos en el submit:
+
+export const startLogin = (email, password) => {
+  return async (dispatch, getState) => {
+    console.log(email, password);
+  };
+};
+
+			VIDEO 367 REALIZAR LA PETICIÓN HTTP PARA LOGEARSE
+
+ Como siempre voy a tener dos tipos de peticiones en mi aplicación,unas que requieren el envio del token y otras que no.La mejor manera de manejar esto es crearse un helper.Además no vamos a usar axios,para no instalar una dependencia.
+Realmente hay varias formas de abordar esto pero siempre tengo que hacer algo al respecto:
+const fetchSinToken = (endpoint, data, method = "GET") => {
+  const url = `${process.env.REACT_APP_API_URL}/${endpoint}`;
+  console.log(url, "url");
+
+  const headers = {
+    "Content-type": "application/json",
+  };
+
+  if (method === "GET") {
+    return fetch(url);
+  } else {
+    return fetch(url, {
+      method,
+      body: JSON.stringify(data),
+      headers,
+    });
+  }
+};
+
+Si el login es exitoso voy a guardar el token y además,como sé que dura 2 horas,otra propiedad relacionado con esto:
+    if(body.ok){
+      localStorage.setItem("token", body.token);
+      localStorage.setItem("token-init-date", new Date().getTime());
+    }
+
+NOTA: fijate que puedo usar la API fetch porque estoy en un navegador(es el propio navegador el que realiza la petición).Si estuviera en un backend no tengo acceso a la API fetch y tengo que usar axios o node-fetch.Asi que,porque no aprovechar que estoy en el browser?
+
+IMPORTANTE: puedo tomar estos archivos xxxActions como una zona de declaración de funciones.Puedo declarar las que quiera o necesite,sin embargo tengo que contestarme a una pregunta cada vez que cree una:
+La pregunta es,¿la acción la desarrollo aqui(asincrona)o es sincrona y no me dice realmente que hay que hacer?.Si es la segunda debo usar el xxxReducer correspondiente para desarrollar su código.
+const login = (user) => ({
+  type: types.authLoginSuccess,
+  payload: user,
+})
+Es decir,o la desarrollo alli o sólo define el payload y type y la desarrollo en el Reducer,pero siempre la desarrollaré y además coinciden con asincronas y síncronas.
+				VIDEO 368 CREACIÓN DE UN NUEVO USUARIO
+
+Antes de nada,fijate como validar todo perfecto en el backend ahora me permite disparar Swal fácil:
+      dispatch(login({
+        uid:body.uid,
+        name:body.name,
+      })) ;
+    }else {
+      Swal.fire('Error', body.msg, 'error');
+    }
+
+Realmente es el mismo procedimiento que para el login sólo que apuntando a otro endpoint.Debo logearlo y redireccionar a la app tal como ha diseñado FH el backend.
+Fijate que nos falta proteger las rutas y persistir la autenticación.
+
+				VIDEO 369 MANTENER EL ESTADO DE LA AUTENTICACIÓN
+
+
