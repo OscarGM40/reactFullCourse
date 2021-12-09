@@ -973,3 +973,30 @@ Recuerda que estoy en una aplicación donde el usuario sólo puede editar o elim
 4- Revisar LOGS de Heroku
 
 Es una sección corta pero enfocada en que puedan desplegar todo su trabajo en un hosting que les permita compartir todo su trabajo a cualquier persona y usar su aplicación en cualquier lugar del mundo.
+
+				VIDEO 359 DESPLIEGUES EN HEROKU
+
+TEndré 	que iniciar un repo en el backend:
+git init
+git add -Av
+git commit
+
+Heroku va a ejecutar npm run start para levantar la aplicación,asi que debo asegurarme que funciona.
+TAmbién tengo que usar process.env.PORT ya que me dará un puerto random.
+
+Ahora hay que instalar heroku(heroku --version) y hacer login(heroku login)
+Despues enlazo el local con el remoto
+heroku git:remote -a calendar-mern-server
+Y hago el deploy
+git push heroku master
+Esto me dará una URL válida,aparte puedo ver mis remotos:
+git remote -v
+heroku  https://git.heroku.com/calendar-mern-server.git (fetch)                  
+heroku  https://git.heroku.com/calendar-mern-server.git (push)
+
+NOTA:puedo agregar y ver las variables de entorno de heroku con:
+heroku run printenv <- para verlas
+heroku config:set NOMBRE_VARIABLE=el_valor_de_la_variable <- para setearlas
+
+Si tuviera problemas puedo verlos con:
+heroku log --tail

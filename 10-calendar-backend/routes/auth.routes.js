@@ -26,14 +26,14 @@ router.post(
       .isEmail()
       .normalizeEmail()
       .withMessage("El email debe ser un email valido")
-      .custom(async (value) => {
+    /*   .custom(async (value) => {
         const emailExists = await Usuario.findOne({ email: value });
         if (emailExists) {
           return Promise.reject("El email ya existe");
           //  throw new Error("El email ya esta registrado");
         }
       })
-      .withMessage("El email ya esta registrado.Desde el custom"),
+      .withMessage("El email ya esta registrado.Desde el custom") */,
     check("password")
       .notEmpty()
       .withMessage("El password es requerido")
