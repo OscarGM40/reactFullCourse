@@ -82,4 +82,337 @@ Fijate que nos falta proteger las rutas y persistir la autenticación.
 
 				VIDEO 369 MANTENER EL ESTADO DE LA AUTENTICACIÓN
 
+Al hacer un refresh(actualizar el navegador) tengo que mirar en el localStorage por el token.Ya tenemos un servicio para esto.
+
+A partir de ahora hay que crear el segundo servicio que mande siempre un token:
+
+const fetchConToken = (endpoint, data, method = "GET") => {
+  const url = `${process.env.REACT_APP_API_URL}/${endpoint}`;
+  // console.log(url, "url");
+  
+  const token = localStorage.getItem("token") || "";
+  const headers = {
+    "Content-type": "application/json",
+    "x-token": token
+  };
+
+  if (method === "GET") {
+    return fetch(url,{
+      method,
+      headers
+    });
+
+Realmente podriamos meter la acción que realice la petición al refrescar en un efecto en el index.js o el AppRouter.jsx o el CalendarApp.Lo haremos en el AppRouter:
+
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(startChecking());
+  }, [dispatch]);
+Fijate que dispatch nunca va a cambiar,aún asi lo meto.
+
+En cuanto a la acción simplemente hace el GET al renew.Muy sencilla.Sin embargo nos olvidamos de devolver el uid y name en el backend.
+export const startChecking = () => {
+  return async(dispatch, getState) => {
+    const response = await fetchConToken("auth/renew");
+    const body = await response.json();
+    console.log(body);
+    
+    if(body.ok){
+      localStorage.setItem("token", body.token);
+      localStorage.setItem("token-init-date", new Date().getTime());
+      
+      dispatch(login({
+        uid:body.uid,
+        name:body.name,
+      }));
+    }else{
+      Swal.fire('Error', body.msg, 'error');
+      dispatch(checkingFinish());
+    }
+  }
+}
+
+const checkingFinish = () => ({
+  type: types.authCheckingFinish,
+});
+
+					VIDEO 371 PROTECCION DE RUTAS
+
+Realmente si tengo un uid y name sé que estoy autenticado.Al final con la versión 6 ha cambiado mucho todo:
+
+PrivateRoute.js:
+
+import React from "react";
+import { Navigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+
+const PrivateRoute = ({ children }) => {
+  const { uid } = useSelector((state) => state.auth);
+  return !!uid ? children : <Navigate to="/login" />;
+};
+
+PublicRoute.js:
+
+import { useSelector } from "react-redux";
+import { Navigate } from "react-router-dom";
+
+const PublicRoute = ({ children }) => {
+  const { uid } = useSelector((state) => state.auth);
+
+  return !!uid ? <Navigate to="/" /> : children;
+};
+
+export default PublicRoute;
+
+Fijate en que ahora comprobaré aqui la condición que hace estar autenticado, y fijate en el uso de children,para que si se cumple o no se renderize esa prop
+
+En el AppRouter.js:
+  <BrowserRouter>
+      <Routes>
+        <Route path="/login" element={
+          <PublicRoute>
+            <LoginScreen />
+          </PublicRoute>
+        }
+        />
+
+        <Route path="/*" element={
+          <PrivateRoute>
+            <CalendarScreen />
+          </PrivateRoute>
+        }
+        />
+      </Routes>
+    </BrowserRouter>
+export default PrivateRoute;
+
+Muy raro desde la v6.Debería hacer un tutorial sobre ello.
+
+							VIDEO 372 LOGOUT
+
+Realmente es bastante sencillo.El botón disparará esta acción:
+
+ const handleLogout = () => {
+    dispatch(startLogout());
+  };
+Y la acción remueve todo:
+export const startLogout = () => {
+  return (dispatch, getState) => {
+    /* las modificaciones del localStorage se consideran asíncronas */
+    localStorage.removeItem("token");
+    localStorage.removeItem("token-init-date");
+    dispatch(logout());
+    
+  };
+}
+
+const logout = () => ({
+  type: types.authLogout,
+});
+
+Esta acción logout la declaro en el authReducer:
+
+    case types.authLogout:
+      return {
+        ...state,
+        uid: null,
+        name: null,
+      };
+* En realidad podia devolver sólo checking : false ya que si no pongo algo lo va a borrar,si no pongo uid:null también lo va a borrar.
+Fijate que mis archivos PrivateRoute y PublicRoute están escuchando por un cambio en la propiedad uid y el logout la cambia(poniendola a null o undefined),con lo que detectan un cambio y renderizan de nuevo el componente,sacandome de la aplicación.Genial.
+
+				SECCION 28 EVENTOS DEL CALENDARIO - CRUD
+
+Realmente ya tenemos casi todo hecho en el backend,sólo queda disparar las acciones para el CRUD de eventos del Calendar.
+
+¿Qué veremos en esta sección?
+
+1- Eventos del calendario + backend
+
+Toda esta sección está enfocada en hacer persistentes nuestros cambios y eventos del calendario utilizando nuestro backend, disparando acciones asíncronas que terminan ejecutando las acciones síncronas que habíamos definido anteriormente.
+
+			VIDEO 377 CREANDO UN EVENTO EN EL CALENDARIO
+
+Realmente ya teniamos echo la acción síncrona contra el reducer,pero ahora vamos a guardarlo también en la base de datos.Muy sencillo:
+
+export const eventStartAddNew = (event) => {
+  return async (dispatch,getState) => {
+    const { uid, name } = getState().auth
+    try {
+      const response = await fetchConToken("events",event,"POST");
+      const body = await response.json();
+      
+      if(body.ok) {
+        event.id = body.evento._id;
+        event.user = {
+          _id: uid,
+          name: name,
+        }
+        dispatch(eventAddNew(event));
+      }
+    } catch (error) {
+      console.log(error)
+    }
+      
+  }
+}
+
+const eventAddNew = (event) => ({
+  type: types.eventAddNew,
+  payload: event
+})
+Fijate como para acceder al state de Redux usamos de nuevo getState().auth.
+
+			VIDEO 378 MOSTRAR EVENTOS DESDE LA BASE DE DATOS
+
+De nuevo es otro que tenemos en local ya echo,sólo falta hacer la petición.Fijate que el punto ideal es cuando se cargue el calendario por primera vez,luego un efecto en el calendarScreen es la solución:
+
+useEffect( () => {
+  dispatch(eventStartLoading())
+},[dispatch])
+Aunque me pida el dispatch nunca cambiará.
+
+Sin embargo,vamos a tener un problema ya que la fecha viene como String y necesitamos que sea un object tipo Date.Lo mejor será crearse un helper
+
+				VIDEO 379 CONVERTIR STRINGS A OBJECTS TIPO DATE
+
+IMPORTANTE:para tener la ayuda de los arrays fijate como le asigno un valor por defecto al helper.
+
+export const prepareEvents = (events=[]) => {
+...
+Muy inteligente Fernando.Para pasar Strings a fechas,y,realmente,siempre que vaya a trabajar con Dates debería usar algo como moment.
+Moment es genial y me va a ayudar a trabajar con fechas fácilmente.
+
+El helper va a ser muy sencillo con moment:
+import moment from "moment";
+
+export const prepareEvents = (events=[]) => {
+
+  return events.map(event => 
+    {
+      event.start = moment(event.start).toDate();
+      event.end = moment(event.end).toDate();
+      return event;
+    });
+}
+
+Por último quiero que cada evento se vea de un color según sea mío o de otros.Esto lo tengo hardcodeado en el calendarScreen.Esto lo puedo saber comparando el event.user.id con el del token que tenemos en el store de cada uno.
+
+  backgroundColor:( uid === event.user.id 
+         ? '#3e9edfcf' 
+         : '#574e4c'),
+
+				VIDEO 380 ACTUALIZAR EVENTO
+
+REcuerda que solo debería poder editar mis eventos y que lo puedo hacer con el doble click.
+export const eventStartUpdate = (event) => {
+  return async (dispatch, getState) => {
+    try {
+      const response = await fetchConToken(`events/${event.id}`, event, "PUT");
+      const body = await response.json();
+
+      if (body.ok) {  
+        dispatch(eventUpdate(event));
+      }else{
+        Swal.fire("Error", body.msg, "error");
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+};
+Realmente con el backend ya nos vale pues no voy a poder editar el evento de otro.
+
+				EXTRA CLOSURES Y MULTIPLE ARROW FUNCTIONS
+
+El uso de múltiples arrow functions en JS indica que estoy usando una 'closure'.Una closure es una función que retorna otra función.Esto es posible porque una arrow function retorna lo que sea que tenga al lado derecho de la arrow:
+const f = () => .... <- retorno esto
+
+Asi pues si proveo una funcion en el lado derecho de la flecha,la arrow function original será una closure,pues retorna una función.
+
+const example = () => () => {
+  console.log('I am a closure')
+}
+NOTA:closure es cierre,clausura,cerramiento,...
+
+Para llamarlas se usarán tantos pares de paréntesis como funciones:
+const addNumbers = a => b => a + b;
+addNumbers(2)(2) // retorna 4 fijate que debo llamar dos funciones
+Esta forma de llamar con grupos de paréntesis se llama curring
+
+Pero,¿porqué usar closures en JS?: La razón principal suele ser contener,persistir o proteger un valor del scope exterior.
+
+						VIDEO 381 ELIMINAR UN EVENTO
+
+Recuerda que tengo el evento en el evento activo y que se borraba al pulsar el botón de borrar:
+
+En el DeleteEventFab.js
+  const handleDelete = () => {
+    dispatch(eventStartDeleting())
+  }
+
+La petición simplemente busco el id de la nota activa,que lo está para haber llegado hasta aqui
+
+Fijate que aún tenemos un error,si seleccionamos un activeEvent en el logout no lo limpiamos.Para corregir esto simplement creo una acción en el eventActions que limpie los eventos y la disparo desde las authActions.
+Fijate como no hay problema alguno en interrealcionar acciones o reducers.
+
+    case types.eventLogout:
+      return {
+        ...initialState,
+      };
+
+Nada me impide disparar eventos en cualquier reducer que apuntan a otro:
+
+En el authLogout...
+
+    localStorage.removeItem("token");
+    localStorage.removeItem("token-init-date");
+    dispatch(eventLogout()) <- uno para el eventReducer
+    dispatch(logout()); <- y otro para el authReducer
+
+			SECCION 28 DESPLEGAR VERSIÓN DE PRODUCCIÓN EN HEROKU
+
+¿Qué veremos en esta sección?
+
+1- Despliegues a producción
+
+Aquí tomaremos nuestra aplicación de React para generar el build de producción y desplegarlo en nuestro backend en Heroku.
+
+		VIDEO 385 GENERAR VERSIÓN DE PRODUCCIÓN Y DESPLEGARLA EN HEROKU
+
+Recuerda que ya hemos especificado en nuestro servidor que vamos a usar una carpeta pública.Simplemente hay que reemplazar ese index.html por la versión que genere el npm run build del frontend.
+
+Fijate que el build me creará varios .chunk.js o .chunk.css.Estos chunk son pequeñas piezas de código que se cargarán cuando sea necesario.
+
+Ya sólo es copiar todo el contenido del build a la carpeta public(borrando lo que habia).Ahora hay que hacer un nuevo despliegue a Heroku.PAra ello voy al folder con el backend:
+>git add .
+>git commit -m "..."
+>git push heroku master
+
+No ha podido ser más fácil.
+
+				SECCION 29 TESTING DE CALENDAR APP	
+
+Esta sección va a ser la más complicada,ya que tenemos un backend y un frontend además de múltiples componentes interconectados.
+No testearemos todo,pues la aplicación es bastante grande.
+
+NOTA IMPORTANTE: En un trabajo real nunca debimos haber desplegado la app en producción(xd) antes de hacer los tests.
+
+¿Qué veremos en esta sección?
+
+1- Finalización con las últimas pruebas necesarias
+2- Pruebas con Fetch
+3- Mocks
+4- Simulaciones
+5- Mocks parciales
+6- Store
+7- MockStore
+8- Eventos de componentes de terceros
+9- Simular acciones
+
+Esta es la sección de pruebas más complicada de todas, pero no imposible, nuevamente el objetivo de la misma es darles a ustedes todo el repertorio de pruebas que podrán necesitar en sus aplicaciones hechas o futuras.
+
+					VIDEO 388 INICIO DE LAS PRUEBAS
+
 

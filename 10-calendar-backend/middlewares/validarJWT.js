@@ -11,7 +11,7 @@ exports.validarJWT = (req, res= response, next) => {
             if (err) {
                 return res.status(401).json({
                     ok: false,
-                    mensaje: 'Token proveido no válido',
+                    msg: 'Token proveido no válido',
                     errors: err
                 });
             }

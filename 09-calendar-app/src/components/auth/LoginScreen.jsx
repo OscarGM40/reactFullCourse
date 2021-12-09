@@ -18,10 +18,10 @@ const LoginScreen = () => {
 
   
   const [ formRegisterValues, handleRegisterInputChange ] = useForm({
-    rName: 'heroku',
-    rEmail: 'heroku@test.com',
-    rPassword: 'ABCabc123',
-    rPassword2: 'ABCabc123'
+    rName: '',
+    rEmail: '',
+    rPassword: '',
+    rPassword2: ''
   } );
   const { rName, rEmail, rPassword, rPassword2 } = formRegisterValues;
 

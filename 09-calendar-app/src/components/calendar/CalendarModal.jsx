@@ -9,7 +9,7 @@ import 'react-datetime/css/react-datetime.css'
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { uiCloseModal } from '../../actions/uiActions';
-import { eventAddNew, eventClearActiveEvent, eventUpdate } from '../../actions/eventActions';
+import { eventClearActiveEvent, eventStartAddNew, eventStartUpdate } from '../../actions/eventActions';
 
 const customStyles = {
   content: {
@@ -122,22 +122,14 @@ export const CalendarModal = () => {
 
     // si el activeEvent está en null estoy creando uno,si está definido estoy editando
     if (activeEvent) {
-      dispatch(eventUpdate(formValues))
+      dispatch(eventStartUpdate(formValues))
     } else {
-      dispatch(eventAddNew({
-        ...formValues,
-        id: new Date().getTime(),
-        user: {
-          _id: '123',
-          name: 'Juan',
-        }
-      }));
+      dispatch(eventStartAddNew(formValues))
     }
 
     setTitleValid(true);
     setDatesValid(true);
     closeModal();
-
 
   }
 

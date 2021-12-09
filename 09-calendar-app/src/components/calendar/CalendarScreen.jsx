@@ -7,11 +7,11 @@ import { messages } from '../../helpers/calendar-messages'
 
 import 'moment/locale/es'
 import { CalendarEvent } from './CalendarEvent'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { CalendarModal } from './CalendarModal'
 import { useDispatch, useSelector } from 'react-redux'
 import { uiOpenModal } from '../../actions/uiActions'
-import { eventClearActiveEvent, eventSetActive } from '../../actions/eventActions'
+import { eventClearActiveEvent, eventSetActive, eventStartLoading } from '../../actions/eventActions'
 import { AddNewFab } from '../ui/AddNewFab'
 import { DeleteEventFab } from '../ui/DeleteEventFab'
 moment.locale('es')
@@ -41,11 +41,16 @@ const localizer = momentLocalizer(moment)
 
 const CalendarScreen = () => {
 
-  const { events,activeEvent } = useSelector(state => state.calendar)
+  const { events, activeEvent } = useSelector(state => state.calendar)
+  const { uid } = useSelector(state => state.auth);
 
   const dispatch = useDispatch();
 
   const [lastView, setLastView] = useState(localStorage.getItem('lastView') || 'month')
+
+  useEffect(() => {
+    dispatch(eventStartLoading());
+  }, [dispatch])
 
   // doble click en un evento de calendario
   const onDoubleClick = (e) => {
@@ -56,7 +61,7 @@ const CalendarScreen = () => {
   const onSelect = (e) => {
     dispatch(eventSetActive(e));
   }
-  
+
   // al cambiar de vista  e===mes|semana|dia|agenda
   const onViewChange = (e) => {
     setLastView(e);
@@ -66,21 +71,22 @@ const CalendarScreen = () => {
   const onSelectSlot = (e) => {
     dispatch(eventClearActiveEvent());
   }
-  
+
   const eventStyleGetter = (event, start, end, isSelected) => {
     let style = {
-      backgroundColor: '#3e9edfcf',
+      backgroundColor:( uid === event.user.id 
+         ? '#059afdf9' 
+         : '#574e4c'),
       borderRadius: '10px',
       opacity: 0.8,
       display: 'block',
-      color: 'black',
+      color: 'white',
     }
-    return {
+    return {  
       style
     }
 
   }
-
   return (
     <div className="calendar-screen">
       <Navbar />
@@ -100,7 +106,7 @@ const CalendarScreen = () => {
         components={{ event: CalendarEvent }}
       />
       <AddNewFab />
-      { !!activeEvent && <DeleteEventFab /> }
+      {!!activeEvent && <DeleteEventFab />}
       <CalendarModal />
     </div>
   )
