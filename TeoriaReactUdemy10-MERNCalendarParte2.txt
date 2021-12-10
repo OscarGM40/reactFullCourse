@@ -415,4 +415,167 @@ Esta es la sección de pruebas más complicada de todas, pero no imposible, nuev
 
 					VIDEO 388 INICIO DE LAS PRUEBAS
 
+Pasos para establecer ambiente pruebas en React
+
+1 Instalar enzyme: npm install enzyme -D
+2 Instalar enzyme-to-json: npm i enzyme-to-json -D
+3 Instalar adaptador para React 17: npm install --save-dev @wojtekmaj/enzyme-adapter-react-17
+4 Instalar redux-mock-store(si uso redux): npm i redux-mock-store -D
+
+En el Setup.js:
+import Enzyme from 'enzyme';
+import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
+import {createSerializer} from 'enzyme-to-json';
+ 
+ 
+Enzyme.configure({ adapter: new Adapter() });
+expect.addSnapshotSerializer(createSerializer({mode: 'deep'}));
+
+Aparte de configurar todo hago una pequeña prueba contra los types.js
+
+				VIDEO 389 PRUEBAS EN NUESTRO HELPER DEL FETCH
+
+Vamos a hacer pruebas sobre nuestro helper fetch.js(el que hace peticiones con y sin token).Nos interesa probar que funcionan como esperamos(que se llame sin el token y exitosamente y que el fetch con el token realmente lo envie y llegue bien)
+
+Si bien puede parecer que no está muy claro qué testear,realmente,simular el login me puede valer,comprobando que si mando un user que ya exista me devuelven un token y su name correctamente,lo cual es muy sencillo.Aparte, ijate que la URL la traemos de los environments.
+
+NOTA: este error => Error: Error: connect ECONNREFUSED 127.0.0.1:80 es algo que esperamos,ya que no he definido el .env.test y no encuentra la base URL de esta linea en el file original:
+ const url = `${process.env.REACT_APP_API_URL}/${endpoint}`;
+NOTA: los archivos .env van por especificidad,siendo el .env el menos especifico.
+Un .env.test.local es más especifico que un .env.test y aún más que un simple .env.
+Es decir que podría usar .env.development.local para desarrollo local y otro .env.development que va a ser menos especifico para desarrollo en remoto.
+Además puedo inferir contenido en los valores de las variables,no tienen porque ir los valores hardcodeados:
+REACT_APP_VERSION=${npm_package_version} <- $DOMAIN es muy usada también
+
+Fijate que al usar .env.development no especifiqué nada para un ambiente de test.Genial,todo claro.
+
+				VIDEO 390 PRUEBAS EN EL FETCH CON TOKEN
+
+Fijate que es buena idea testear que la resp del helper sea una instance de Response. 
+NOTA: perfectamente puedo trabajar con el localStorage(sin simularlo) dentro de mis pruebas,y como debo mandar un token válido podría guardar el token del login que hice en el test anterior ya que tengo que mandar un token válido y me acaban de dar uno.
+
+En la prueba anterior lo último que hago es asignarlo a una variable let
+token = body.token;
+
+Puedo testear cualquier cosa,pero una respuesta como está me confirmará que viaja el token(ya que la pude hacer) y que se hace el fetch de ese endpoint:
+
+  test("fetch con token debe de funcionar", async () => {
+    localStorage.setItem("token", token);
+
+    const resp = await fetchConToken(
+      "events/61ad1a4cb2f69f692ba17a79",
+      {},"DELETE");
+    const body = await resp.json();
+    expect( body.ok ).toBe(false);
+    expect(body.msg).toBe("Evento no encontrado");
+
+    }); <- Genial
+
+				VIDEO 391 PRUEBAS EN LAS ACCIONES DEL AUTHACTIONS.JS
+
+NOTA: recuerda que con la librería react-modal puedo crear un Modal super-configutable fácilmente(el cual debí haber implementado en mi app).Además que se puede cerrar y abrir con redux.
+Fijate que tendré que hacer varias configuracione ya que voy a usar dispatch,usar el store,mockear Swal...
+
+PASOS A SEGUIR 
+1- como necesitaré un store ocupo redux-mock-store
+import  configureStore from 'redux-mock-store';
+
+2- Dado que son acciones que regresan funciones,es decir,que hayé asincronia en ellas necesito thunk
+import thunk from 'redux-thunk';
+
+3- como quiero la ayuda del tipado me traigo a jest-dom:
+import '@testing-library/jest-dom';
+
+/* debo configurar el store tras importarlo */
+const middlewares = [thunk];
+const mockStore = configureStore(middlewares);
+
+/* de momento uso un objeto vacio como initial State para el store */
+const initState = {};
+/* ya si proveo una instancia de este store fake */
+let store = mockStore(initState);
+
+
+describe('Pruebas en el authActions.js', () => {
+    /* quiero reiniciar al state inicial en cada prueba,ya que las acciones que se hayan ejecutado lo cambian */  
+    beforeEach(() => {
+        store = mockStore(initState);
+    });
+
+  
+})
+
+Ya puedo ejecutar una prueba,podríamos empezar con el startLogin,comprobando que realmente guarde en el localStorage,que llame a Swal.fire si hay un error,...
+REalmente es más sencillo de lo que parece asinto:
+
+    test('startLogin actua correctamente', async () => {
+
+      await store.dispatch(startLogin('test@test.com','ABCAbc123')); 
+      const actions = store.getActions();
+
+      console.log(actions[0]);
+      expect(actions[0]).toEqual({  
+        type: types.authLoginSuccess,
+        payload: {  
+          uid: expect.any(String), // <- podria hardcodearlo
+          name: 'Jane',
+        }
+      })
+    })
+
+ Toda la configuración anterior me permite disparar cualquier acción con store.dispatch y ver sus consecuencias.Increíble.
+
+DAdo que dijimos que queremos mirar en el localStorage vamos a hacer un mock de eĺ.Recuerda que es con la interfaz Storage y fijate como estoy mockeando el setItem sólo!:
+Storage.prototype.setItem = jest.fn();
+
+Además ,cada vez que use jest.fn() debería limpiar sus mocks con jest.clearAllMocks antes de cada prueba por motivos similares a limpiar el store:
+
+beforeEach( () => {
+  store = mockStore(initState);
+  jest.clearAllMocks();
+} <- siempre limpiar todo,asinto
+
+* Las funciones van por referencia,lógicamente
+expect(localStorage.setItem).toHaveBeenCalledTimes(2); 
+expect(localStorage.setItem).toHaveBeenCalledWith("token",expect.any(String));
+
+IMPORTANTE: yo puedo acceder a los argumentos con los que son llamadas cualquier función a la que le haga un mock con jest.fn().Para ello accedo a la referencia a la funcion + la propiedad mocks porque es un mock y + la propiedad calls ya que quiero los argumentos de la llamada.
+Esto siempre va a ser un arreglo de arreglos,siendo el arreglo interior de dos posiciones,manejando pares de clave-valor.Ejemplo:
+[ ["token","...],["token-init-date",3434346] ]
+
+*Con esto en mente puedo acceder a sus argumentos,puedo hacer un mock del setItem del localStorage y ver el token,por ejemplo:
+Storage.prototype.setItem = jest.fn() <- le hago el mock
+* disparo una action con mi mock store que haga algo en el store 
+await store.dispatch...
+* puedo mirar el valor de los argumentos de esa funcion mock
+console.log(localStorage.setItem.mocks.calls[0][1]) <- Genial.
+
+			VIDEO 392 PRUEBAS CON UN LOGIN INCORRECTO
+
+Esta prueba es bien fácil.Puedo meter una password incorrecta y esperar que actions sea un arreglo vacío y/o mockear a Swal.fire y esperar que se haya llamado:
+
+await store.dispatch(startLogin("test@test.com",'lkfjslkfklf'));
+  const actions = store.getActions();
+  expect(actions).toEqual([]);
+  expect(Swal.fire).toHAveBeenCalled()
+
+NOTA: para hacer el mock de una función ya he visto como lo hemos hecho con el setItem del localStorage luego puedo hacer lo mismo con Swal.fire:
+
+Swal.fire = jest.fn()
+
+Sin embargo,hay otra forma,un poco más compleja,pero también permite configurar más profundamente el mock que crearé:
+
+* Fijate que aqui estoy mockeando una libreria entera!
+jest.mock('sweetalert2', () => ({ <- devuelvo un Object literal como 2º arg
+  fire: jest.fn();
+})	
+Lo bueno de esta forma es que podría mockear varias propiedades y métodos a la vez,podría mockear delete,open,etc.. si las tuviera
+Ambas formas van a crear un mock sobre Swal.fire,en este ejemplo.Genial.
+
+expect(Swal.fire).toHaveBeenCalledWith("Error","El password es incorrecto","error");
+expect(Swal.fire.mock.calls[0][0]).toBe("Error");
+Podría hacer lo mismo pero mandando un email incorrecto.Yo no lo haré pero Fernando si lo hizo.
+
+			VIDEO 393 PRUEBAS CON EL REGISTRO DE USUARIOS
+
 
