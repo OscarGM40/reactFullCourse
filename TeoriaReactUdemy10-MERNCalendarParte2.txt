@@ -578,4 +578,142 @@ Podría hacer lo mismo pero mandando un email incorrecto.Yo no lo haré pero Fer
 
 			VIDEO 393 PRUEBAS CON EL REGISTRO DE USUARIOS
 
+LLegados a este punto,pudiera parecer que el register es exactamente igual que el login,y si que lo es,pero sólo la primera vez,ya que me guardará el usuario en la DB y la segunda vez va a tirar error,cambiando el comportamiento.
+Hay varias soluciones que podría usar,como borrar el usuario creado llamando al endpoint con el DELETE,pero seguń tenemos la apicación sólo desactivamos al usuario.
+Lo que vamos a hacer es hacer un mock del fetchSinToken(ya que sabemos que funciona pues acabamos de hacer dos pruebas con él).Genial.
+Además,sólo queremos el mock en esta tercera prueba.
+
+PASOS
+1º Importar todo el archivo
+import * as fetchModule from "../../helpers/fetch";
+
+2º Hago el jest.fn() de la función que quiera,pero ojo con posibles necesidades extras,en este caso necesito que esa funcion llame al json() y que me devuelva ciertos valores(no es que lo necesite,es que es lo que quiero simular):
+
+test('startRegister actua correctamente', async () => {
+  fetchModule.fetchSinToken = jest.fn( () => ({
+    json(){
+      return {
+        ok:true,
+        uid:'123',
+        name:'carlos',
+        token:'11ffaff'
+}));
+Asi es como se simula no sólo una función,sino lo que necesite para funcionar.Lógicamente he simulado incluso el retorno de la función(que llamará a un método json que devuelve esos valores,no necesito más,solo me importa que se llame json y que devuelva esas propiedades:
+
+ expect(actions[0]).toEqual({
+      type: types.authLoginSuccess,
+      payload: {
+        uid: '123456789',
+        name: "Jane",
+        token: "ABCabc123",
+      },
+    });
+De esta forma estoy comprobando que se guarda.
+NOTA:parece que era necesario traerse todo el módulo.No puedo hacer esto:
+import { fetchSinToken } from '../../helpers/fetch';
+Hay que traerse todo.
+import * as fetchModule from "../../helpers/fetch";
+
+			VIDEO 394 PRUEBAS CON LA ACCIÓN CHECKING
+
+Nota git stash apply aplica el último cambio en la pila de stash(sin embargo no borra el cambio de la pila)puedo borrarlo con git stash drop,pero aún mejor uso git stash pop que hace las dos cosas(aplicar el último cambio y borrar la pila)
+Adicionalmente se recomienda dar un nombre usando git stash save "msg" y también se puede usar cualquier posición de la pila,no tengo porque sacar el último,simplemente es una pila(git apply <id> y git drop <id>)
+
+Bien,volviendo a la prueba parece fácil,pero no lo es.Fijate que en la primera hacemos el login,luego tengo acceso al token para la tercera,ya que se ejecutan secuencialmente.
+Aún así sigue dando que no hay token en los headers,¿como puede ser?.Bien,pues porque hemos simulado el Storage.prototype.setItem.Podría parecer que si saco el mock y lo meto en el segundo test para el tercero puedo llamar al localStorage.setItem real y tampoco puedo,xd,ya que en Javascript todo pasa por referencia.
+
+La solución es simular el fetchConToken igual que ya hemos hecho.
+
+    fetchModule.fetchConToken = jest.fn(() => ({
+      json() {
+        return {
+          ok: true,
+          name: "Jane",
+          uid: "123456789",
+          token: "asf",
+        };
+      },
+    }));
+
+    await store.dispatch(startChecking());
+    const actions = store.getActions();
+    console.log(actions);
+
+    expect(actions[0]).toEqual({
+      type: types.authLoginSuccess,
+      payload: {
+        uid: '123456789',
+        name: "Jane",
+      },
+    });
+
+    expect(localStorage.setItem).toHaveBeenCalledTimes(2);
+    expect(localStorage.setItem).toHaveBeenCalledWith(
+      "token","asf");
+
+Genial,ha sido más fácil de lo que parecía,sólo que hay que saber simular funciones más complejas.
+
+					VIDEO 395 PRUEBAS EN EL UIREDUCER
+
+Realmente va a ser muy sencillo probar este reducer.Simplemente disparo un par de acciones y espero que cambie su state:
+
+  test("Debe de retornar el estado por defecto", () => {
+    const state = uiReducer(initialState, {});
+    expect(state).toEqual(initialState);
+  });
+
+  test("Debe de abrir y cerrar el modal", () => {
+    let action = uiOpenModal();
+    let state = uiReducer(initialState, action);
+
+    expect(state).toEqual({
+      modalOpen: true,
+    });
+
+    action = uiCloseModal();
+    state = uiReducer(initialState, action);
+
+    expect(state).toEqual({
+      modalOpen: false,
+    });
+
+  });
+
+					VIDEO 396 PRUEBAS EN EL AUTHREDUCER
+
+IMPORTANTE: si mi aplicación creciera y agregara ua propiedad extra cualquier prueba que use un toEqual({}) y un object literal hardcodeado me va a fallar,pues el objeto creció.Para evitar esto,es mejor usar expect.objectContaining(object) que va a comprobar si simplemente las incluye,pero podría tener más
+
+En vez de usar {} usar expect.objectContaining({}):
+
+    expect(state).toEqual(expect.objectContaining({
+      checking: false,
+      uid: null,
+      name: null,
+    }));
+  });
+
+NOTA:recuerda que las acciones síncronas del authActions no las exporté,habrá que hardcodearlas simplemente(o las exporto,pero para qué):
+
+  test('el authLogin funciona correctamente', async () => {
+    const action = {
+      type: types.authLoginSuccess,
+      payload: {
+        uid: '123',
+        name: 'Juan',
+      },
+    };
+
+    const state = authReducer(initialState, action);
+
+    expect(state).toEqual({
+      checking: false,
+      uid: '123',
+      name: 'Juan',
+    });
+  });
+Comprobar que realmente objectContaining me pasa con un objeto con más propiedades.
+
+			VIDEO 397 PRUEBAS EN EL COMPONENTE DELETEEVENTFAB
+
+Fijate que el componente Calendar viene con un montón de eventos.Fernando me enseñara una forma de disparar eventos de librerias de terceros.El Modal también es otro componente de terceros y el Date Picker igual,asi que será muy interesante aprenderlo.
 

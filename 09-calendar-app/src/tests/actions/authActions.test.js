@@ -4,10 +4,11 @@ import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 /* como quiero ayuda con el tipado me traigo a jest-dom */
 import "@testing-library/jest-dom";
-import { startLogin } from "../../actions/authActions";
+import { startChecking, startLogin, startLogout, startRegister } from "../../actions/authActions";
 import { types } from "../../types/types";
 import Swal from "sweetalert2";
 
+import * as fetchModule from "../../helpers/fetch";
 
 /* debo configurar el store tras importarlo */
 const middlewares = [thunk];
@@ -18,7 +19,7 @@ const initState = {};
 /* ya si proveo una instancia de este store fake */
 let store = mockStore(initState);
 
-/* como voy a mirar en el localStorage le hago un mock a su función setItem */
+/* como voy a mirar en el localStorage le hago un mock a su función setItem,ojo que cambia un poco la sintaxis */
 Storage.prototype.setItem = jest.fn();
 Swal.fire = jest.fn();
 
@@ -44,26 +45,113 @@ describe("Pruebas en el authActions.js", () => {
         name: "Jane",
       },
     });
-    expect(localStorage.setItem).toHaveBeenCalledTimes(2); 
-    expect(localStorage.setItem).toHaveBeenCalledWith("token",expect.any(String));
-    expect(localStorage.setItem).toHaveBeenCalledWith("token-init-date",expect.any(Number));
+    expect(localStorage.setItem).toHaveBeenCalledTimes(2);
+    expect(localStorage.setItem).toHaveBeenCalledWith(
+      "token",
+      expect.any(String)
+    );
+    expect(localStorage.setItem).toHaveBeenCalledWith(
+      "token-init-date",
+      expect.any(Number)
+    );
 
     /* puedo acceder a los args de una funcion mockeada con functionName.mock.calls[pos][pos] */
     // console.log(localStorage.setItem.mock.calls[0][1]);
+  });
 
-     });
+  test("startLogin con un login incorrecto actua bien", async () => {
+    await store.dispatch(startLogin("test@test.com", "lkfjslkfklf"));
+    const actions = store.getActions();
 
-     test("startLogin con un login incorrecto actua bien", async () => {
+    expect(actions).toEqual([]);
 
-       await store.dispatch(startLogin("test@test.com",'lkfjslkfklf'));
-       const actions = store.getActions();
+    expect(Swal.fire).toHaveBeenCalled();
+    expect(Swal.fire).toHaveBeenCalledWith(
+      "Error",
+      "El password es incorrecto",
+      "error"
+    );
+    expect(Swal.fire.mock.calls[0][0]).toBe("Error");
+  });
 
-      expect(actions).toEqual([]);
+  test("startRegister actua correctamente", async () => {
+    fetchModule.fetchSinToken = jest.fn(() => ({
+      json() {
+        return {
+          ok: true,
+          name: "Jane",
+          uid: "123456789",
+          token: "ABCabc123",
+        };
+      },
+    }));
 
-      expect(Swal.fire).toHaveBeenCalled();
-      expect(Swal.fire).toHaveBeenCalledWith("Error","El password es incorrecto","error");
-      expect(Swal.fire.mock.calls[0][0]).toBe("Error");
-       
-     });
-     
+    await store.dispatch(
+      startRegister("paco el anchoa", "test03@test.com", "ABCabc123")
+    );
+    const actions = store.getActions();
+    // console.log(actions);
+
+    expect(actions[0]).toEqual({
+      type: types.authLoginSuccess,
+      payload: {
+        uid: '123456789',
+        name: "Jane",
+      },
+    });
+    expect(localStorage.setItem).toHaveBeenCalledTimes(2);
+    expect(localStorage.setItem).toHaveBeenCalledWith(
+      "token","ABCabc123")
+    expect(localStorage.setItem).toHaveBeenCalledWith(
+      "token-init-date",
+      expect.any(Number)
+    );
+  });
+
+  test("startChecking correcto",async () => {
+
+    fetchModule.fetchConToken = jest.fn(() => ({
+      json() {
+        return {
+          ok: true,
+          name: "Jane",
+          uid: "123456789",
+          token: "asf",
+        };
+      },
+    }));
+
+    await store.dispatch(startChecking());
+    const actions = store.getActions();
+    // console.log(actions);
+
+    expect(actions[0]).toEqual({
+      type: types.authLoginSuccess,
+      payload: {
+        uid: '123456789',
+        name: "Jane",
+      },
+    });
+
+    expect(localStorage.setItem).toHaveBeenCalledTimes(2);
+    expect(localStorage.setItem).toHaveBeenCalledWith(
+      "token","asf");
+    
+   });
+
+   test("startLogout correcto", async () => {
+    Storage.prototype.removeItem = jest.fn();
+
+    await store.dispatch(startLogout());
+    const actions = store.getActions();
+    // console.log(actions);
+
+    expect(actions[0]).toEqual({
+      type: types.eventLogout,
+    });
+
+    expect(localStorage.removeItem).toHaveBeenCalledTimes(2);
+    expect(localStorage.removeItem).toHaveBeenCalledWith("token");
+    expect(localStorage.removeItem).toHaveBeenCalledWith("token-init-date");
+   })
 });
