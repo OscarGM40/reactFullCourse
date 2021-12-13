@@ -717,3 +717,122 @@ Comprobar que realmente objectContaining me pasa con un objeto con más propieda
 
 Fijate que el componente Calendar viene con un montón de eventos.Fernando me enseñara una forma de disparar eventos de librerias de terceros.El Modal también es otro componente de terceros y el Date Picker igual,asi que será muy interesante aprenderlo.
 
+Volviendo al video,para probar este componente DeleteEventFab va a ser complicado configurar todo para testearlo.La ventaja es que es la misma configuración para los demás.
+
+import React from "react";
+import { mount } from "enzyme";
+import { DeleteEventFab } from "../../../components/ui/DeleteEventFab";
+import { Provider } from "react-redux";
+
+import configureMockStore from "redux-mock-store";
+import thunk from "redux-thunk";
+import '@testing-library/jest-dom';
+
+
+const middlewares = [thunk];
+const mockStore = configureMockStore(middlewares);
+
+const initialState = {}
+const store = mockStore(initialState);
+store.dispatch = jest.fn();
+
+const wrapper = mount(
+  <Provider store={store}>
+    <DeleteEventFab />
+  </Provider>
+);
+Realmente es añadir a la configuración que ya estaba usando la necesaria para un Componente que usa el storeS(mount+Provider)
+
+Si miro el componente puedo ver que no necesito un initialState y que lo único que puedo probar es que se llame al startDeleting,no hay más para probar
+
+				VIDEO 398 PRUEBA EN EL DeleteEventFab
+
+Bien,y como puedo probar que efectivamente se llama al  eventStartDeleting?.Porque probar que se llama al dispatch no es del todo correcto:
+
+  test("Debe de llamar al eventStartDelete", () => {
+    const button = wrapper.find("button");
+    button.simulate("click");
+    
+    expect(store.dispatch).toHaveBeenCalled();
+    expect(store.dispatch).toHaveBeenCalledTimes(1);
+    
+  });
+
+Hay que hacer un mock completo de la función.Realmente no necesito su lógica,sólo que se llame a ella en concreto.Muy interesante:
+
+jest.mock('../../../actions/eventActions', () => ({
+    eventStartDeleting: jest.fn()
+    }));
+
+Ya puedo esperar que se haya llamado esta función en concreto:
+
+  expect(store.dispatch).toHaveBeenCalledWith(eventStartDeleting());
+  expect(eventStartDeleting).toHaveBeenCalled();
+
+Ahora si que es un prueba completa satisfactoria,no a medias.
+
+			VIDEO 399 PRUEBAS EN EL COMPONENTE APP-ROUTER
+
+NOTA: fijate que tras intentar hacer una snapshot me sale este error:
+
+ react-modal: No elements were found for selector #root.
+
+Esto se debe a que nuestro modal necesita el <div id="root"> pero en un ambiente de pruebas no lo tengo,lógicamente.Yo no quiero probar el modal ahora,ya lo haremos más adelante.Asi que lo que quiero es pasar este error.
+
+Hay varias formas de hacerlo.Una muy poco elegante sería ir al código de desarrollo,a esa línea en ese componente CalendarModal y poner una condición
+
+if( process.env.NODE_ENV !== 'test'){
+  Modal.setAppElement('root')
+}
+Ahora en los tests ya no tendré ese fallo
+NOTA:fijate que si no hay Links parece que no se necesita el MemoryRouter
+
+		VIDEO 400 MOSTRAR RUTA DIFERENTE SEGÚN SE ESTÁ AUTENTICADO O NO
+
+Recuerda que la condición era tener o no la propiedad uid para ver una ruta pública o privada:
+const PublicRoute = ({ children }) => {
+  const { uid } = useSelector((state) => state.auth);
+  return !!uid ? <Navigate to="/" /> : children;
+
+ Fijate que para simular que estoy en el login tengo que tener la propiedad uid y y puedo evaluar cualquier cosa del LoginComponent,como que tenga un h1 con el texto xxx,etc.Evaluaremos que exista la clase 'login-container',que es suficiente:
+
+test('Debe de mostrar la ruta pública', () => {
+      
+  const initialState = {
+        auth: {
+          checking: false,
+          uid:null //no autenticado
+         }
+      }
+
+ expect(wrapper).toMatchSnapshot();
+ expect(wrapper.find("login-container").exists()).toBe(true);
+
+IMPORTANTE: las snapshots las puedo mirar,asi me aseguro que realmente se devuelve el HTML correcto,son más importantes de lo que parece!
+
+NOTA:fijate que en la prueba que simulo estar autenticado y que me lleve al CalendarScreen necesitaría tener los events en el store de redux!.Por eso me da fallo la prueba:
+Error: Uncaught [TypeError: Cannot destructure property 'events' of '(0 , _reactRedux.useSelector)(...)' as it is undefined.]
+Esta claro que tengo un initialState no válido:
+
+De echo hasta me pidió el modalOpen de 'ui':
+   const initialState = {
+      auth: {
+        checking: false,
+        uid: "ABC123", //autenticado
+      },
+      calendar: {
+        events: [],
+        activeEvent: null,
+      },
+      ui:{
+        modalOpen: false,
+      }
+    };
+Fijate que si saco la snapshot del CalendarScreen me pedirá actualizarla cada mes,pues cambia.
+
+					VIDEO 401 PRUEBAS EN EL LOGIN SCREEN
+
+
+
+
+

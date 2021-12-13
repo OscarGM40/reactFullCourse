@@ -24,7 +24,9 @@ const customStyles = {
 // Estas declaraciones(y el css de arriba ) fijate que están fuera del componente,esto es para que se calculen sólo una vez,a diferencia de si las pusiera dentro del functional component
 
 // en React o Angular simplemente apuntar al selector del div que esta en el index.html con la app del framework
-Modal.setAppElement('#root');
+if(process.env.NODE_ENV !== 'test'){
+  Modal.setAppElement('#root');
+}
 
 // 3:45:50s no quiero esto,quiero horas exactas
 const now = moment().minutes(0).seconds(0).add(1, 'hours')
