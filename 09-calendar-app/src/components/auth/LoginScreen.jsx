@@ -48,7 +48,7 @@ const LoginScreen = () => {
         <div className="col-md-6 login-form-1">
           <h3>Ingreso</h3>
          
-          <form onSubmit={ handleLogin}>
+          <form onSubmit={ handleLogin} >
             <div className="form-group">
               <input
                 type="text"

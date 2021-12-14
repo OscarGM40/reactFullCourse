@@ -832,7 +832,74 @@ Fijate que si saco la snapshot del CalendarScreen me pedirá actualizarla cada m
 
 					VIDEO 401 PRUEBAS EN EL LOGIN SCREEN
 
+Una prueba que puedo hacer es comprobar que se llame el startLogin al hacer submit o el startRegister en el form de registro.Todo esto ya sé hacer,asi que me traigo las dos acciones y las hago un mock:
 
+import { startLogin, startRegister } from "../../../actions/authActions";
 
+jest.mock("../../../actions/authActions", () => ({
+  startLogin: jest.fn(),
+  startRegister: jest.fn(),
+}));
+
+NOTA: fijate que también hicimos un jest.fn() del dispatch
+ test("Debe de llamar a startLogin", () => {
+    wrapper
+      .find('input[name="lEmail"]')
+      .simulate("change", {
+        target: { name: "email", value: "test@test.com" },
+      });
+
+    wrapper
+      .find('input[name="lPassword"]')
+      .simulate("change", { target: { name: "password", value: "ABCabc123" } });
+
+    wrapper.find("form").at(0).simulate("submit", { 
+      preventDefault: () => {}
+    });
+    expect(startLogin).toHaveBeenCalled();   
+    expect(startLogin.mock.calls[0][0]).toBe("test@test.com");
+    
+  });
+
+Recuerda que cuando tenga dos form puedo acceder con at(0) al primero
+
+		VIDEO 402 PRUEBA CON DOS CONTRASEÑAS DIFERENTES
+
+ES buena idea probar que NO se llama al startRegister y que SI se llame al Swal.fire con dos passwords diferentes:
+
+jest.mock('sweetalert2',() => ({
+  fire:jest.fn();
+});
+
+  test("No hay registro si las contraseñas son diferentes", () => {
+    
+    wrapper
+      .find('input[name="rPassword"]')
+      .simulate("change", {
+        target: { name: "rPassword", value: "ABCabc123" },
+      });
+      
+    wrapper
+      .find('input[name="rPassword2"]')
+      .simulate("change", {
+        target: { name: "rPassword2", value: "ABCabc12345" },
+      });
+      
+    wrapper
+      .find("form").at(1).prop('onSubmit')({preventDefault(){} });
+
+    expect(startRegister).not.toHaveBeenCalled();
+    expect(Swal.fire).toHaveBeenCalled();
+
+  });
+
+NOTA:fijate que si mirara por el expect(swal.fire).not.TohaveBeenCalled() en la tercera prueba me da falso,porque arrastra la llamada de la segunda prueba.Recuerda limpiar los mocks siempre!:
+
+ beforeEach(() => {
+    jest.clearAllMocks();
+  })
+En los siguientes videos veré como trabajar con componentes de terceros.Genial
+
+			VIDEO 403 PRUEBAS EN EL CALENDAR SCREEN
 
 
