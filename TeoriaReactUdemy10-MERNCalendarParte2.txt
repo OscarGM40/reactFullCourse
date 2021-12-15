@@ -415,4 +415,634 @@ Esta es la sección de pruebas más complicada de todas, pero no imposible, nuev
 
 					VIDEO 388 INICIO DE LAS PRUEBAS
 
+Pasos para establecer ambiente pruebas en React
+
+1 Instalar enzyme: npm install enzyme -D
+2 Instalar enzyme-to-json: npm i enzyme-to-json -D
+3 Instalar adaptador para React 17: npm install --save-dev @wojtekmaj/enzyme-adapter-react-17
+4 Instalar redux-mock-store(si uso redux): npm i redux-mock-store -D
+
+En el Setup.js:
+import Enzyme from 'enzyme';
+import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
+import {createSerializer} from 'enzyme-to-json';
+ 
+ 
+Enzyme.configure({ adapter: new Adapter() });
+expect.addSnapshotSerializer(createSerializer({mode: 'deep'}));
+
+Aparte de configurar todo hago una pequeña prueba contra los types.js
+
+				VIDEO 389 PRUEBAS EN NUESTRO HELPER DEL FETCH
+
+Vamos a hacer pruebas sobre nuestro helper fetch.js(el que hace peticiones con y sin token).Nos interesa probar que funcionan como esperamos(que se llame sin el token y exitosamente y que el fetch con el token realmente lo envie y llegue bien)
+
+Si bien puede parecer que no está muy claro qué testear,realmente,simular el login me puede valer,comprobando que si mando un user que ya exista me devuelven un token y su name correctamente,lo cual es muy sencillo.Aparte, ijate que la URL la traemos de los environments.
+
+NOTA: este error => Error: Error: connect ECONNREFUSED 127.0.0.1:80 es algo que esperamos,ya que no he definido el .env.test y no encuentra la base URL de esta linea en el file original:
+ const url = `${process.env.REACT_APP_API_URL}/${endpoint}`;
+NOTA: los archivos .env van por especificidad,siendo el .env el menos especifico.
+Un .env.test.local es más especifico que un .env.test y aún más que un simple .env.
+Es decir que podría usar .env.development.local para desarrollo local y otro .env.development que va a ser menos especifico para desarrollo en remoto.
+Además puedo inferir contenido en los valores de las variables,no tienen porque ir los valores hardcodeados:
+REACT_APP_VERSION=${npm_package_version} <- $DOMAIN es muy usada también
+
+Fijate que al usar .env.development no especifiqué nada para un ambiente de test.Genial,todo claro.
+
+				VIDEO 390 PRUEBAS EN EL FETCH CON TOKEN
+
+Fijate que es buena idea testear que la resp del helper sea una instance de Response. 
+NOTA: perfectamente puedo trabajar con el localStorage(sin simularlo) dentro de mis pruebas,y como debo mandar un token válido podría guardar el token del login que hice en el test anterior ya que tengo que mandar un token válido y me acaban de dar uno.
+
+En la prueba anterior lo último que hago es asignarlo a una variable let
+token = body.token;
+
+Puedo testear cualquier cosa,pero una respuesta como está me confirmará que viaja el token(ya que la pude hacer) y que se hace el fetch de ese endpoint:
+
+  test("fetch con token debe de funcionar", async () => {
+    localStorage.setItem("token", token);
+
+    const resp = await fetchConToken(
+      "events/61ad1a4cb2f69f692ba17a79",
+      {},"DELETE");
+    const body = await resp.json();
+    expect( body.ok ).toBe(false);
+    expect(body.msg).toBe("Evento no encontrado");
+
+    }); <- Genial
+
+				VIDEO 391 PRUEBAS EN LAS ACCIONES DEL AUTHACTIONS.JS
+
+NOTA: recuerda que con la librería react-modal puedo crear un Modal super-configutable fácilmente(el cual debí haber implementado en mi app).Además que se puede cerrar y abrir con redux.
+Fijate que tendré que hacer varias configuracione ya que voy a usar dispatch,usar el store,mockear Swal...
+
+PASOS A SEGUIR 
+1- como necesitaré un store ocupo redux-mock-store
+import  configureStore from 'redux-mock-store';
+
+2- Dado que son acciones que regresan funciones,es decir,que hayé asincronia en ellas necesito thunk
+import thunk from 'redux-thunk';
+
+3- como quiero la ayuda del tipado me traigo a jest-dom:
+import '@testing-library/jest-dom';
+
+/* debo configurar el store tras importarlo */
+const middlewares = [thunk];
+const mockStore = configureStore(middlewares);
+
+/* de momento uso un objeto vacio como initial State para el store */
+const initState = {};
+/* ya si proveo una instancia de este store fake */
+let store = mockStore(initState);
+
+
+describe('Pruebas en el authActions.js', () => {
+    /* quiero reiniciar al state inicial en cada prueba,ya que las acciones que se hayan ejecutado lo cambian */  
+    beforeEach(() => {
+        store = mockStore(initState);
+    });
+
+  
+})
+
+Ya puedo ejecutar una prueba,podríamos empezar con el startLogin,comprobando que realmente guarde en el localStorage,que llame a Swal.fire si hay un error,...
+REalmente es más sencillo de lo que parece asinto:
+
+    test('startLogin actua correctamente', async () => {
+
+      await store.dispatch(startLogin('test@test.com','ABCAbc123')); 
+      const actions = store.getActions();
+
+      console.log(actions[0]);
+      expect(actions[0]).toEqual({  
+        type: types.authLoginSuccess,
+        payload: {  
+          uid: expect.any(String), // <- podria hardcodearlo
+          name: 'Jane',
+        }
+      })
+    })
+
+ Toda la configuración anterior me permite disparar cualquier acción con store.dispatch y ver sus consecuencias.Increíble.
+
+DAdo que dijimos que queremos mirar en el localStorage vamos a hacer un mock de eĺ.Recuerda que es con la interfaz Storage y fijate como estoy mockeando el setItem sólo!:
+Storage.prototype.setItem = jest.fn();
+
+Además ,cada vez que use jest.fn() debería limpiar sus mocks con jest.clearAllMocks antes de cada prueba por motivos similares a limpiar el store:
+
+beforeEach( () => {
+  store = mockStore(initState);
+  jest.clearAllMocks();
+} <- siempre limpiar todo,asinto
+
+* Las funciones van por referencia,lógicamente
+expect(localStorage.setItem).toHaveBeenCalledTimes(2); 
+expect(localStorage.setItem).toHaveBeenCalledWith("token",expect.any(String));
+
+IMPORTANTE: yo puedo acceder a los argumentos con los que son llamadas cualquier función a la que le haga un mock con jest.fn().Para ello accedo a la referencia a la funcion + la propiedad mocks porque es un mock y + la propiedad calls ya que quiero los argumentos de la llamada.
+Esto siempre va a ser un arreglo de arreglos,siendo el arreglo interior de dos posiciones,manejando pares de clave-valor.Ejemplo:
+[ ["token","...],["token-init-date",3434346] ]
+
+*Con esto en mente puedo acceder a sus argumentos,puedo hacer un mock del setItem del localStorage y ver el token,por ejemplo:
+Storage.prototype.setItem = jest.fn() <- le hago el mock
+* disparo una action con mi mock store que haga algo en el store 
+await store.dispatch...
+* puedo mirar el valor de los argumentos de esa funcion mock
+console.log(localStorage.setItem.mocks.calls[0][1]) <- Genial.
+
+			VIDEO 392 PRUEBAS CON UN LOGIN INCORRECTO
+
+Esta prueba es bien fácil.Puedo meter una password incorrecta y esperar que actions sea un arreglo vacío y/o mockear a Swal.fire y esperar que se haya llamado:
+
+await store.dispatch(startLogin("test@test.com",'lkfjslkfklf'));
+  const actions = store.getActions();
+  expect(actions).toEqual([]);
+  expect(Swal.fire).toHAveBeenCalled()
+
+NOTA: para hacer el mock de una función ya he visto como lo hemos hecho con el setItem del localStorage luego puedo hacer lo mismo con Swal.fire:
+
+Swal.fire = jest.fn()
+
+Sin embargo,hay otra forma,un poco más compleja,pero también permite configurar más profundamente el mock que crearé:
+
+* Fijate que aqui estoy mockeando una libreria entera!
+jest.mock('sweetalert2', () => ({ <- devuelvo un Object literal como 2º arg
+  fire: jest.fn();
+})	
+Lo bueno de esta forma es que podría mockear varias propiedades y métodos a la vez,podría mockear delete,open,etc.. si las tuviera
+Ambas formas van a crear un mock sobre Swal.fire,en este ejemplo.Genial.
+
+expect(Swal.fire).toHaveBeenCalledWith("Error","El password es incorrecto","error");
+expect(Swal.fire.mock.calls[0][0]).toBe("Error");
+Podría hacer lo mismo pero mandando un email incorrecto.Yo no lo haré pero Fernando si lo hizo.
+
+			VIDEO 393 PRUEBAS CON EL REGISTRO DE USUARIOS
+
+LLegados a este punto,pudiera parecer que el register es exactamente igual que el login,y si que lo es,pero sólo la primera vez,ya que me guardará el usuario en la DB y la segunda vez va a tirar error,cambiando el comportamiento.
+Hay varias soluciones que podría usar,como borrar el usuario creado llamando al endpoint con el DELETE,pero seguń tenemos la apicación sólo desactivamos al usuario.
+Lo que vamos a hacer es hacer un mock del fetchSinToken(ya que sabemos que funciona pues acabamos de hacer dos pruebas con él).Genial.
+Además,sólo queremos el mock en esta tercera prueba.
+
+PASOS
+1º Importar todo el archivo
+import * as fetchModule from "../../helpers/fetch";
+
+2º Hago el jest.fn() de la función que quiera,pero ojo con posibles necesidades extras,en este caso necesito que esa funcion llame al json() y que me devuelva ciertos valores(no es que lo necesite,es que es lo que quiero simular):
+
+test('startRegister actua correctamente', async () => {
+  fetchModule.fetchSinToken = jest.fn( () => ({
+    json(){
+      return {
+        ok:true,
+        uid:'123',
+        name:'carlos',
+        token:'11ffaff'
+}));
+Asi es como se simula no sólo una función,sino lo que necesite para funcionar.Lógicamente he simulado incluso el retorno de la función(que llamará a un método json que devuelve esos valores,no necesito más,solo me importa que se llame json y que devuelva esas propiedades:
+
+ expect(actions[0]).toEqual({
+      type: types.authLoginSuccess,
+      payload: {
+        uid: '123456789',
+        name: "Jane",
+        token: "ABCabc123",
+      },
+    });
+De esta forma estoy comprobando que se guarda.
+NOTA:parece que era necesario traerse todo el módulo.No puedo hacer esto:
+import { fetchSinToken } from '../../helpers/fetch';
+Hay que traerse todo.
+import * as fetchModule from "../../helpers/fetch";
+
+			VIDEO 394 PRUEBAS CON LA ACCIÓN CHECKING
+
+Nota git stash apply aplica el último cambio en la pila de stash(sin embargo no borra el cambio de la pila)puedo borrarlo con git stash drop,pero aún mejor uso git stash pop que hace las dos cosas(aplicar el último cambio y borrar la pila)
+Adicionalmente se recomienda dar un nombre usando git stash save "msg" y también se puede usar cualquier posición de la pila,no tengo porque sacar el último,simplemente es una pila(git apply <id> y git drop <id>)
+
+Bien,volviendo a la prueba parece fácil,pero no lo es.Fijate que en la primera hacemos el login,luego tengo acceso al token para la tercera,ya que se ejecutan secuencialmente.
+Aún así sigue dando que no hay token en los headers,¿como puede ser?.Bien,pues porque hemos simulado el Storage.prototype.setItem.Podría parecer que si saco el mock y lo meto en el segundo test para el tercero puedo llamar al localStorage.setItem real y tampoco puedo,xd,ya que en Javascript todo pasa por referencia.
+
+La solución es simular el fetchConToken igual que ya hemos hecho.
+
+    fetchModule.fetchConToken = jest.fn(() => ({
+      json() {
+        return {
+          ok: true,
+          name: "Jane",
+          uid: "123456789",
+          token: "asf",
+        };
+      },
+    }));
+
+    await store.dispatch(startChecking());
+    const actions = store.getActions();
+    console.log(actions);
+
+    expect(actions[0]).toEqual({
+      type: types.authLoginSuccess,
+      payload: {
+        uid: '123456789',
+        name: "Jane",
+      },
+    });
+
+    expect(localStorage.setItem).toHaveBeenCalledTimes(2);
+    expect(localStorage.setItem).toHaveBeenCalledWith(
+      "token","asf");
+
+Genial,ha sido más fácil de lo que parecía,sólo que hay que saber simular funciones más complejas.
+
+					VIDEO 395 PRUEBAS EN EL UIREDUCER
+
+Realmente va a ser muy sencillo probar este reducer.Simplemente disparo un par de acciones y espero que cambie su state:
+
+  test("Debe de retornar el estado por defecto", () => {
+    const state = uiReducer(initialState, {});
+    expect(state).toEqual(initialState);
+  });
+
+  test("Debe de abrir y cerrar el modal", () => {
+    let action = uiOpenModal();
+    let state = uiReducer(initialState, action);
+
+    expect(state).toEqual({
+      modalOpen: true,
+    });
+
+    action = uiCloseModal();
+    state = uiReducer(initialState, action);
+
+    expect(state).toEqual({
+      modalOpen: false,
+    });
+
+  });
+
+					VIDEO 396 PRUEBAS EN EL AUTHREDUCER
+
+IMPORTANTE: si mi aplicación creciera y agregara ua propiedad extra cualquier prueba que use un toEqual({}) y un object literal hardcodeado me va a fallar,pues el objeto creció.Para evitar esto,es mejor usar expect.objectContaining(object) que va a comprobar si simplemente las incluye,pero podría tener más
+
+En vez de usar {} usar expect.objectContaining({}):
+
+    expect(state).toEqual(expect.objectContaining({
+      checking: false,
+      uid: null,
+      name: null,
+    }));
+  });
+
+NOTA:recuerda que las acciones síncronas del authActions no las exporté,habrá que hardcodearlas simplemente(o las exporto,pero para qué):
+
+  test('el authLogin funciona correctamente', async () => {
+    const action = {
+      type: types.authLoginSuccess,
+      payload: {
+        uid: '123',
+        name: 'Juan',
+      },
+    };
+
+    const state = authReducer(initialState, action);
+
+    expect(state).toEqual({
+      checking: false,
+      uid: '123',
+      name: 'Juan',
+    });
+  });
+Comprobar que realmente objectContaining me pasa con un objeto con más propiedades.
+
+			VIDEO 397 PRUEBAS EN EL COMPONENTE DELETEEVENTFAB
+
+Fijate que el componente Calendar viene con un montón de eventos.Fernando me enseñara una forma de disparar eventos de librerias de terceros.El Modal también es otro componente de terceros y el Date Picker igual,asi que será muy interesante aprenderlo.
+
+Volviendo al video,para probar este componente DeleteEventFab va a ser complicado configurar todo para testearlo.La ventaja es que es la misma configuración para los demás.
+
+import React from "react";
+import { mount } from "enzyme";
+import { DeleteEventFab } from "../../../components/ui/DeleteEventFab";
+import { Provider } from "react-redux";
+
+import configureMockStore from "redux-mock-store";
+import thunk from "redux-thunk";
+import '@testing-library/jest-dom';
+
+
+const middlewares = [thunk];
+const mockStore = configureMockStore(middlewares);
+
+const initialState = {}
+const store = mockStore(initialState);
+store.dispatch = jest.fn();
+
+const wrapper = mount(
+  <Provider store={store}>
+    <DeleteEventFab />
+  </Provider>
+);
+Realmente es añadir a la configuración que ya estaba usando la necesaria para un Componente que usa el storeS(mount+Provider)
+
+Si miro el componente puedo ver que no necesito un initialState y que lo único que puedo probar es que se llame al startDeleting,no hay más para probar
+
+				VIDEO 398 PRUEBA EN EL DeleteEventFab
+
+Bien,y como puedo probar que efectivamente se llama al  eventStartDeleting?.Porque probar que se llama al dispatch no es del todo correcto:
+
+  test("Debe de llamar al eventStartDelete", () => {
+    const button = wrapper.find("button");
+    button.simulate("click");
+    
+    expect(store.dispatch).toHaveBeenCalled();
+    expect(store.dispatch).toHaveBeenCalledTimes(1);
+    
+  });
+
+Hay que hacer un mock completo de la función.Realmente no necesito su lógica,sólo que se llame a ella en concreto.Muy interesante:
+
+jest.mock('../../../actions/eventActions', () => ({
+    eventStartDeleting: jest.fn()
+    }));
+
+Ya puedo esperar que se haya llamado esta función en concreto:
+
+  expect(store.dispatch).toHaveBeenCalledWith(eventStartDeleting());
+  expect(eventStartDeleting).toHaveBeenCalled();
+
+Ahora si que es un prueba completa satisfactoria,no a medias.
+
+			VIDEO 399 PRUEBAS EN EL COMPONENTE APP-ROUTER
+
+NOTA: fijate que tras intentar hacer una snapshot me sale este error:
+
+ react-modal: No elements were found for selector #root.
+
+Esto se debe a que nuestro modal necesita el <div id="root"> pero en un ambiente de pruebas no lo tengo,lógicamente.Yo no quiero probar el modal ahora,ya lo haremos más adelante.Asi que lo que quiero es pasar este error.
+
+Hay varias formas de hacerlo.Una muy poco elegante sería ir al código de desarrollo,a esa línea en ese componente CalendarModal y poner una condición
+
+if( process.env.NODE_ENV !== 'test'){
+  Modal.setAppElement('root')
+}
+Ahora en los tests ya no tendré ese fallo
+NOTA:fijate que si no hay Links parece que no se necesita el MemoryRouter
+
+		VIDEO 400 MOSTRAR RUTA DIFERENTE SEGÚN SE ESTÁ AUTENTICADO O NO
+
+Recuerda que la condición era tener o no la propiedad uid para ver una ruta pública o privada:
+const PublicRoute = ({ children }) => {
+  const { uid } = useSelector((state) => state.auth);
+  return !!uid ? <Navigate to="/" /> : children;
+
+ Fijate que para simular que estoy en el login tengo que tener la propiedad uid y y puedo evaluar cualquier cosa del LoginComponent,como que tenga un h1 con el texto xxx,etc.Evaluaremos que exista la clase 'login-container',que es suficiente:
+
+test('Debe de mostrar la ruta pública', () => {
+      
+  const initialState = {
+        auth: {
+          checking: false,
+          uid:null //no autenticado
+         }
+      }
+
+ expect(wrapper).toMatchSnapshot();
+ expect(wrapper.find("login-container").exists()).toBe(true);
+
+IMPORTANTE: las snapshots las puedo mirar,asi me aseguro que realmente se devuelve el HTML correcto,son más importantes de lo que parece!
+
+NOTA:fijate que en la prueba que simulo estar autenticado y que me lleve al CalendarScreen necesitaría tener los events en el store de redux!.Por eso me da fallo la prueba:
+Error: Uncaught [TypeError: Cannot destructure property 'events' of '(0 , _reactRedux.useSelector)(...)' as it is undefined.]
+Esta claro que tengo un initialState no válido:
+
+De echo hasta me pidió el modalOpen de 'ui':
+   const initialState = {
+      auth: {
+        checking: false,
+        uid: "ABC123", //autenticado
+      },
+      calendar: {
+        events: [],
+        activeEvent: null,
+      },
+      ui:{
+        modalOpen: false,
+      }
+    };
+Fijate que si saco la snapshot del CalendarScreen me pedirá actualizarla cada mes,pues cambia.
+
+					VIDEO 401 PRUEBAS EN EL LOGIN SCREEN
+
+Una prueba que puedo hacer es comprobar que se llame el startLogin al hacer submit o el startRegister en el form de registro.Todo esto ya sé hacer,asi que me traigo las dos acciones y las hago un mock:
+
+import { startLogin, startRegister } from "../../../actions/authActions";
+
+jest.mock("../../../actions/authActions", () => ({
+  startLogin: jest.fn(),
+  startRegister: jest.fn(),
+}));
+
+NOTA: fijate que también hicimos un jest.fn() del dispatch
+ test("Debe de llamar a startLogin", () => {
+    wrapper
+      .find('input[name="lEmail"]')
+      .simulate("change", {
+        target: { name: "email", value: "test@test.com" },
+      });
+
+    wrapper
+      .find('input[name="lPassword"]')
+      .simulate("change", { target: { name: "password", value: "ABCabc123" } });
+
+    wrapper.find("form").at(0).simulate("submit", { 
+      preventDefault: () => {}
+    });
+    expect(startLogin).toHaveBeenCalled();   
+    expect(startLogin.mock.calls[0][0]).toBe("test@test.com");
+    
+  });
+
+Recuerda que cuando tenga dos form puedo acceder con at(0) al primero
+
+		VIDEO 402 PRUEBA CON DOS CONTRASEÑAS DIFERENTES
+
+ES buena idea probar que NO se llama al startRegister y que SI se llame al Swal.fire con dos passwords diferentes:
+
+jest.mock('sweetalert2',() => ({
+  fire:jest.fn();
+});
+
+  test("No hay registro si las contraseñas son diferentes", () => {
+    
+    wrapper
+      .find('input[name="rPassword"]')
+      .simulate("change", {
+        target: { name: "rPassword", value: "ABCabc123" },
+      });
+      
+    wrapper
+      .find('input[name="rPassword2"]')
+      .simulate("change", {
+        target: { name: "rPassword2", value: "ABCabc12345" },
+      });
+      
+    wrapper
+      .find("form").at(1).prop('onSubmit')({preventDefault(){} });
+
+    expect(startRegister).not.toHaveBeenCalled();
+    expect(Swal.fire).toHaveBeenCalled();
+
+  });
+
+NOTA:fijate que si mirara por el expect(swal.fire).not.TohaveBeenCalled() en la tercera prueba me da falso,porque arrastra la llamada de la segunda prueba.Recuerda limpiar los mocks siempre!:
+
+ beforeEach(() => {
+    jest.clearAllMocks();
+  })
+En los siguientes videos veré como trabajar con componentes de terceros.Genial
+
+			VIDEO 403 PRUEBAS EN EL CALENDAR SCREEN
+
+Probemos en el CalendarScreen que al hacer click llamemos a la acción pertinente,o al hacer doble click,cambiar la view...La idea es aprender a disparar eventos de terceros.
+De momento hacemos sólo la snapshot.
+NOTA: fijate como simplemente me traigo a thunk aunque no sepa si voy a usar asincronia.
+
+import configureMockStore from "redux-mock-store";
+import thunk from "redux-thunk";
+
+const middlewares = [thunk];
+const mockStore = configureMockStore(middlewares);
+
+Recuerda que este snapshot quedará obsoleto en un mes.
+
+			VIDEO 404 INTERACCIONES CON EVENTOS DE TERCEROS
+
+Realmente es muuucho más sencillo de lo que parece.Con find puedo buscar por el nombre de ese componente(ya que es una tag HTML al fin y al cabo).Genial.
+
+ /* Fijate como con Find puedo buscar por el nombre de un Componente,como Fade o Paper,... */
+   const calendar = wrapper.find("Calendar");
+ /* ahora simplemente busco por la prop que necesite */
+  const calendarMessages = calendar.prop("messages");
+
+NOTA: fijate como al hacer jest.mock de eventSetActive me está dando este error:
+  TypeError: (0 , _eventActions.eventStartLoading) is not a function
+Es obvio que está pidiendo que haga el mock de esa acción(seguramente porque eventSetActive dispare a eventStartLoading.
+
+En cuanto a las pruebas puedo evaluar cualquier cosa:
+
+ /* ya puedo evaluar que el doble click llame al uiOpenModal */
+    
+    calendar.prop("onDoubleClickEvent")();
+
+    expect(uiOpenModal).toHaveBeenCalled();
+
+    expect(store.dispatch).toHaveBeenCalledWith(uiOpenModal());
+
+    /* ya puedo evaluar que el click llame al evento */
+    calendar.prop("onSelectEvent")({
+      start:"123",
+      end:"456",
+      title:"Evento",
+    });
+
+    expect(eventSetActive).toHaveBeenCalledWith({
+      start:"123",
+      end:"456",
+      title:"Evento",
+    });
+
+Por último puedo probar el onView mockeando el localStorage.setItem.Genial:
+   act( () => {
+      calendar.prop("onView")("month");
+      expect(localStorage.setItem).toHaveBeenCalledWith("lastView", "month");
+    } )
+
+			VIDEO 405 PRUEBAS CON EL MODAL Y EL DATE-TIME-PICKER
+
+Fijate que para que se muestre el modal voy a necesitar el uiOpenModal a true como initialState.Esto es asi,es obvio,si,pero muy importante entenderlo.
+
+const initialState = {
+  ui: {
+    modalOpen: true,
+  },
+} <- también me pide un activeEvent,pues tengo un evento en el modal
+
+Nota ,dado que el modal tiene data muy dinámica como las fechas es mejor no hacerle una snapshot pues va a cambiar todo el rato.Primero que nada podriamos mirar si existe el modal(por su clase 'modal');
+
+test('Debe de mostrar el modal', () => {
+    expect(wrapper.find('.modal').exists()).toBe(true);
+  });
+
+NOTA: esta prueba está arrojando un falso positivo,ya que el Modal siempre existe,sólo que estára oculto.No es correcta,pues siempre existe incluso con openModal a false
+  /* analizar esta propiedad si es una prueba correcta */
+    expect(wrapper.find('Modal').prop('isOpen')).toBe(true);
+
+Ahora creo un evento activo:
+   activeEvent: {
+      title: 'Hola mundo',
+      notes: 'algunas notas', 
+      start: now.toDate(),
+      end: nowPlus1.toDate(),
+    },
+
+Y podré ver un warning.Me pide que coloque ariaHideApp={false}.Este warning es porque estoy en un ambiente de pruebas y no sabe muy bien donde abrir el modal,donde colocarlo.Simplemente lo copio,pero vamos a condicionar ese boleano:
+
+ /* no sería buena idea hardcodear el boleano de esta prop */
+   ariaHideApp={
+      process.env.NODE_ENV === 'test' ? false : true
+  }
+Perfecto.Fijate que el tuvo otro error con el canvas:
+HTMLCanvasElement.prototype.getContext = () => {} pues eso -_-
+
+				VIDEO 406 DISPARA ACCIONES DENTRO DEL MODAL
+
+Realmente no hay mucha más ciencia,fijate que yo ahora mismo estaría con el modal abierto y un evento activo,asi que puedo probar que al pulsar en guardar se llame a las acciones que se tienen que llamar:
+
+    act( () => {
+      wrapper.find('form').prop('onSubmit')({
+        preventDefault: () => { }});
+      expect(eventStartUpdate).toHaveBeenCalled();
+      expect(eventStartUpdate.mock.calls[0][0].title).toBe('Hola mundo');
+      expect(eventStartUpdate).toHaveBeenCalledWith
+      (initialState.calendar.activeEvent);
+      expect(eventClearActiveEvent).toHaveBeenCalled();
+      })
+
+Hagamos otra,por ejemplo,sin mandar el título,que era obligatorio.Recuerda que lo único que hace es cambiar una clase CSS para ponerse rojo el borde.
+
+NOTA:fijate que la prueba anterior ha limpiado el formulario.Asi que de primeras ya no tengo titulo ni body,etc...Ya estoy preparado para el test sin hacer nada
+
+  test('debe de mostrar error si falta el título', () => {
+    act( () => {
+
+      wrapper.find('form').prop('onSubmit')({
+        preventDefault: () => { }});
+        /* fijate que la prueba anterior ha limpiado el formulario asi que no puede llamar al update */
+      expect(eventStartUpdate).not.toHaveBeenCalled();
+      expect(eventStartUpdate.mock.calls[0][0].notes).toBe('algunas notas');
+      })
+De este video debo sacar que la ejecución de la primera prueba influye en la segunda.Cambiar el orden haría que fallara la segunda prueba
+
+			VIDEO 407 DEBE DE LLAMAR LA CREACIÓN DE UN NUEVO EVENTO
+
+Si estoy creando el activeEvent debe ser null,asi que hay que cambiar todo desde el initialState.
+
+También habrá que llenar el formulario,lógicamente.Puedo esperar que se llame a a la accion con los valores pertinentes.Fijate en el uso de expect.anything() por si no quiero pensar en el tipo del dato:
+	
+   wrapper.find('input[name="title"]').simulate('change',{
+      target:{name:'title',value:'Hola mundo'}});
+      
+      act( () => {
+      wrapper.find("form").prop("onSubmit")({
+        preventDefault: () => {}});
+
+      expect(eventStartAddNew).toHaveBeenCalledWith({
+        title: expect.any(String),
+        notes: expect.anything(),
+        start: expect.any(Date),
+        end: expect.any(Date),
+      });
+      expect(eventClearActiveEvent).toHaveBeenCalled();
+    });
+
+
 

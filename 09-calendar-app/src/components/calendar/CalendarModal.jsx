@@ -24,7 +24,9 @@ const customStyles = {
 // Estas declaraciones(y el css de arriba ) fijate que están fuera del componente,esto es para que se calculen sólo una vez,a diferencia de si las pusiera dentro del functional component
 
 // en React o Angular simplemente apuntar al selector del div que esta en el index.html con la app del framework
-Modal.setAppElement('#root');
+if(process.env.NODE_ENV !== 'test'){
+  Modal.setAppElement('#root');
+}
 
 // 3:45:50s no quiero esto,quiero horas exactas
 const now = moment().minutes(0).seconds(0).add(1, 'hours')
@@ -147,6 +149,10 @@ export const CalendarModal = () => {
         closeTimeoutMS={200}
         className="modal"
         overlayClassName="modal-fondo"
+        /* no sería buena idea hardcodear el boleano de esta prop */
+        ariaHideApp={
+          process.env.NODE_ENV === 'test' ? false : true
+        }
       >
         <h1> { !!activeEvent 
                ? "Editar evento"
@@ -167,6 +173,7 @@ export const CalendarModal = () => {
               }}
               value={dateStart}
               showTimeSelect
+              name="juan"
               onChange={handleStartDateChange}
               dateFormat="DD-MM-YYYY"
               timeFormat="hh:mm A"
