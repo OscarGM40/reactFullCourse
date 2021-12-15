@@ -902,4 +902,147 @@ En los siguientes videos veré como trabajar con componentes de terceros.Genial
 
 			VIDEO 403 PRUEBAS EN EL CALENDAR SCREEN
 
+Probemos en el CalendarScreen que al hacer click llamemos a la acción pertinente,o al hacer doble click,cambiar la view...La idea es aprender a disparar eventos de terceros.
+De momento hacemos sólo la snapshot.
+NOTA: fijate como simplemente me traigo a thunk aunque no sepa si voy a usar asincronia.
+
+import configureMockStore from "redux-mock-store";
+import thunk from "redux-thunk";
+
+const middlewares = [thunk];
+const mockStore = configureMockStore(middlewares);
+
+Recuerda que este snapshot quedará obsoleto en un mes.
+
+			VIDEO 404 INTERACCIONES CON EVENTOS DE TERCEROS
+
+Realmente es muuucho más sencillo de lo que parece.Con find puedo buscar por el nombre de ese componente(ya que es una tag HTML al fin y al cabo).Genial.
+
+ /* Fijate como con Find puedo buscar por el nombre de un Componente,como Fade o Paper,... */
+   const calendar = wrapper.find("Calendar");
+ /* ahora simplemente busco por la prop que necesite */
+  const calendarMessages = calendar.prop("messages");
+
+NOTA: fijate como al hacer jest.mock de eventSetActive me está dando este error:
+  TypeError: (0 , _eventActions.eventStartLoading) is not a function
+Es obvio que está pidiendo que haga el mock de esa acción(seguramente porque eventSetActive dispare a eventStartLoading.
+
+En cuanto a las pruebas puedo evaluar cualquier cosa:
+
+ /* ya puedo evaluar que el doble click llame al uiOpenModal */
+    
+    calendar.prop("onDoubleClickEvent")();
+
+    expect(uiOpenModal).toHaveBeenCalled();
+
+    expect(store.dispatch).toHaveBeenCalledWith(uiOpenModal());
+
+    /* ya puedo evaluar que el click llame al evento */
+    calendar.prop("onSelectEvent")({
+      start:"123",
+      end:"456",
+      title:"Evento",
+    });
+
+    expect(eventSetActive).toHaveBeenCalledWith({
+      start:"123",
+      end:"456",
+      title:"Evento",
+    });
+
+Por último puedo probar el onView mockeando el localStorage.setItem.Genial:
+   act( () => {
+      calendar.prop("onView")("month");
+      expect(localStorage.setItem).toHaveBeenCalledWith("lastView", "month");
+    } )
+
+			VIDEO 405 PRUEBAS CON EL MODAL Y EL DATE-TIME-PICKER
+
+Fijate que para que se muestre el modal voy a necesitar el uiOpenModal a true como initialState.Esto es asi,es obvio,si,pero muy importante entenderlo.
+
+const initialState = {
+  ui: {
+    modalOpen: true,
+  },
+} <- también me pide un activeEvent,pues tengo un evento en el modal
+
+Nota ,dado que el modal tiene data muy dinámica como las fechas es mejor no hacerle una snapshot pues va a cambiar todo el rato.Primero que nada podriamos mirar si existe el modal(por su clase 'modal');
+
+test('Debe de mostrar el modal', () => {
+    expect(wrapper.find('.modal').exists()).toBe(true);
+  });
+
+NOTA: esta prueba está arrojando un falso positivo,ya que el Modal siempre existe,sólo que estára oculto.No es correcta,pues siempre existe incluso con openModal a false
+  /* analizar esta propiedad si es una prueba correcta */
+    expect(wrapper.find('Modal').prop('isOpen')).toBe(true);
+
+Ahora creo un evento activo:
+   activeEvent: {
+      title: 'Hola mundo',
+      notes: 'algunas notas', 
+      start: now.toDate(),
+      end: nowPlus1.toDate(),
+    },
+
+Y podré ver un warning.Me pide que coloque ariaHideApp={false}.Este warning es porque estoy en un ambiente de pruebas y no sabe muy bien donde abrir el modal,donde colocarlo.Simplemente lo copio,pero vamos a condicionar ese boleano:
+
+ /* no sería buena idea hardcodear el boleano de esta prop */
+   ariaHideApp={
+      process.env.NODE_ENV === 'test' ? false : true
+  }
+Perfecto.Fijate que el tuvo otro error con el canvas:
+HTMLCanvasElement.prototype.getContext = () => {} pues eso -_-
+
+				VIDEO 406 DISPARA ACCIONES DENTRO DEL MODAL
+
+Realmente no hay mucha más ciencia,fijate que yo ahora mismo estaría con el modal abierto y un evento activo,asi que puedo probar que al pulsar en guardar se llame a las acciones que se tienen que llamar:
+
+    act( () => {
+      wrapper.find('form').prop('onSubmit')({
+        preventDefault: () => { }});
+      expect(eventStartUpdate).toHaveBeenCalled();
+      expect(eventStartUpdate.mock.calls[0][0].title).toBe('Hola mundo');
+      expect(eventStartUpdate).toHaveBeenCalledWith
+      (initialState.calendar.activeEvent);
+      expect(eventClearActiveEvent).toHaveBeenCalled();
+      })
+
+Hagamos otra,por ejemplo,sin mandar el título,que era obligatorio.Recuerda que lo único que hace es cambiar una clase CSS para ponerse rojo el borde.
+
+NOTA:fijate que la prueba anterior ha limpiado el formulario.Asi que de primeras ya no tengo titulo ni body,etc...Ya estoy preparado para el test sin hacer nada
+
+  test('debe de mostrar error si falta el título', () => {
+    act( () => {
+
+      wrapper.find('form').prop('onSubmit')({
+        preventDefault: () => { }});
+        /* fijate que la prueba anterior ha limpiado el formulario asi que no puede llamar al update */
+      expect(eventStartUpdate).not.toHaveBeenCalled();
+      expect(eventStartUpdate.mock.calls[0][0].notes).toBe('algunas notas');
+      })
+De este video debo sacar que la ejecución de la primera prueba influye en la segunda.Cambiar el orden haría que fallara la segunda prueba
+
+			VIDEO 407 DEBE DE LLAMAR LA CREACIÓN DE UN NUEVO EVENTO
+
+Si estoy creando el activeEvent debe ser null,asi que hay que cambiar todo desde el initialState.
+
+También habrá que llenar el formulario,lógicamente.Puedo esperar que se llame a a la accion con los valores pertinentes.Fijate en el uso de expect.anything() por si no quiero pensar en el tipo del dato:
+	
+   wrapper.find('input[name="title"]').simulate('change',{
+      target:{name:'title',value:'Hola mundo'}});
+      
+      act( () => {
+      wrapper.find("form").prop("onSubmit")({
+        preventDefault: () => {}});
+
+      expect(eventStartAddNew).toHaveBeenCalledWith({
+        title: expect.any(String),
+        notes: expect.anything(),
+        start: expect.any(Date),
+        end: expect.any(Date),
+      });
+      expect(eventClearActiveEvent).toHaveBeenCalled();
+    });
+
+
 

@@ -149,6 +149,10 @@ export const CalendarModal = () => {
         closeTimeoutMS={200}
         className="modal"
         overlayClassName="modal-fondo"
+        /* no sería buena idea hardcodear el boleano de esta prop */
+        ariaHideApp={
+          process.env.NODE_ENV === 'test' ? false : true
+        }
       >
         <h1> { !!activeEvent 
                ? "Editar evento"
@@ -169,6 +173,7 @@ export const CalendarModal = () => {
               }}
               value={dateStart}
               showTimeSelect
+              name="juan"
               onChange={handleStartDateChange}
               dateFormat="DD-MM-YYYY"
               timeFormat="hh:mm A"
